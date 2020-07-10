@@ -70,7 +70,7 @@ def connectToDB():
 if __name__ == '__main__':
     token = ""
     if(os.path.exists("secrets.txt")):
-        with open("token.txt",'r') as openFile:
+        with open("secrets.txt",'r') as openFile:
             secrets = json.loads(openFile.read())
             token = secrets["token"]
     client.run(token)
