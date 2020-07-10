@@ -9,7 +9,7 @@ from discord.ext import commands
 import os
 import json
 import pymysql
-
+import datetime    
 
 client = discord.Client()
 
@@ -35,20 +35,30 @@ async def authCheck(message,channel,authorizedUsers):
 
 async def handleXp(message):
     author = (str)(message.author.id)
+    timeFormat = '%Y-%m-%d %H:%M:%S'
     cursor.execute("SELECT * FROM users WHERE discordId = \"" + author + "\"")
     result = cursor.fetchall()
     assert not len(result) > 1, "more than one entry with the same discordId"
-    print(result)
+
+    now = datetime.datetime.now()
+    ts = now.strftime(timeFormat)
+
     if(len(result) == 0): #if this is a new user, create a new entry with 1 xp in the database
         formatStr = """
-            INSERT INTO users (`discordId`, `xp`)
-            VALUES ("{dId}",{exp});
+            INSERT INTO users (`discordId`, `xp`, `lastUpdated`)
+            VALUES ("{dId}",{exp},"{time}");
             """
-        cursor.execute(formatStr.format(dId=author,exp=1))
-    else: #if this is a returning user, increment 1 xp into the database
-        cursor.execute("UPDATE users SET xp = " + (str)(result[0][1]+1) + " WHERE discordId = \"" + author + "\"")
-    DB.commit()
-    await message.channel.send("<@" + author + "> has " + (str)(result[0][1]+1) + " xp!")
+        cursor.execute(formatStr.format(dId=author,exp=1,time=ts))
+    else: #if this is a returning user, increment 1 xp into the database if it has been at least a minute
+        xp = result[0][1]
+        then = result[0][2]
+        elapsedMins = now.minute - then.minute
+        print("This user was last updated " + (str)(elapsedMins) + " minutes ago!")
+        if(elapsedMins > 0):
+            xp += 1
+            cursor.execute("UPDATE users SET xp = " + (str)(xp) + ", lastUpdated = \"" + ts + "\" WHERE discordId = \"" + author + "\"")   
+            DB.commit()
+        await message.channel.send("<@" + author + "> has " + (str)(xp) + " xp!")
 
 
 @client.event
@@ -94,5 +104,5 @@ if __name__ == '__main__':
     if(os.path.exists("secrets.txt")):
         with open("secrets.txt",'r') as openFile:
             secrets = json.loads(openFile.read())
-            token = secrets["token"]
+            token = secrets["token"] 
     client.run(token)
