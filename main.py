@@ -17,7 +17,7 @@ async def checkCommands(message):
     command = message.content[1:].split(" ")
     base = command[0]
     print((str)(message.author.id) + " used " + base)
-    #print(message.guild.text_channels)
+    print(message.guild.text_channels)
     guild = message.guild
     channel = message.channel
     msg = ""
@@ -53,11 +53,15 @@ async def handleXp(message):
 
 @client.event
 async def on_message(message):
+    channel = message.channel
     # we do not want the bot to reply to itself
     if message.author == client.user:
         return
     else:
         await handleXp(message)
+    if message.content.startswith('Hello'):
+        msg = 'Hello {0.author.mention}'.format(message)
+        await channel.send(msg)
     if message.content.startswith('!'):
         await checkCommands(message)
 
