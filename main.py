@@ -34,21 +34,21 @@ async def authCheck(message,channel,authorizedUsers):
     return True
 
 async def handleXp(message):
-    print("Handling exp")
     author = (str)(message.author.id)
     cursor.execute("SELECT * FROM users WHERE discordId = \"" + author + "\"")
     result = cursor.fetchall()
     assert not len(result) > 1, "more than one entry with the same discordId"
     print(result)
-    if(len(result) == 0):
+    if(len(result) == 0): #if this is a new user, create a new entry with 1 xp in the database
         formatStr = """
             INSERT INTO users (`discordId`, `xp`)
             VALUES ("{dId}",{exp});
             """
         cursor.execute(formatStr.format(dId=author,exp=1))
-    else:
+    else: #if this is a returning user, increment 1 xp into the database
         cursor.execute("UPDATE users SET xp = " + (str)(result[0][1]+1) + " WHERE discordId = \"" + author + "\"")
     DB.commit()
+    await message.channel.send("<@" + author + "> has " + (str)(result[0][1]+1) + " xp!")
 
 
 @client.event
