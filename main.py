@@ -37,6 +37,7 @@ async def handleXp(message):
     author = (str)(message.author.id)
     cursor.execute("SELECT * FROM users WHERE discordId = \"" + author + "\"")
     result = cursor.fetchall()
+    xp = result[0][1]
     assert not len(result) > 1, "more than one entry with the same discordId"
     print(result)
     if(len(result) == 0): #if this is a new user, create a new entry with 1 xp in the database
@@ -46,9 +47,10 @@ async def handleXp(message):
             """
         cursor.execute(formatStr.format(dId=author,exp=1))
     else: #if this is a returning user, increment 1 xp into the database
-        cursor.execute("UPDATE users SET xp = " + (str)(result[0][1]+1) + " WHERE discordId = \"" + author + "\"")
+        cursor.execute("UPDATE users SET xp = " + (str)(xp+1) + " WHERE discordId = \"" + author + "\"")
     DB.commit()
-    await message.channel.send("<@" + author + "> has " + (str)(result[0][1]+1) + " xp!")
+    if((xp+1) % 5 == 0): #tracking milestones (increments of 5 for debug purposes)
+        await message.channel.send("<@" + author + "> has " + (str)(xp+1) + " xp!")
 
 
 @client.event
