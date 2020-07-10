@@ -10,8 +10,8 @@ import os
 import json
 import pymysql
 
+
 client = discord.Client()
-bot = commands.Bot(command_prefix='!')
 
 async def checkCommands(message):
     command = message.content[1:].split(" ")
@@ -33,15 +33,31 @@ async def authCheck(message,channel,authorizedUsers):
         return False
     return True
 
+async def handleXp(message):
+    print("Handling exp")
+    author = (str)(message.author.id)
+    cursor.execute("SELECT * FROM users WHERE discordId = \"" + author + "\"")
+    result = cursor.fetchall()
+    assert not len(result) > 1, "more than one entry with the same discordId"
+    print(result)
+    if(len(result) == 0):
+        formatStr = """
+            INSERT INTO users (`discordId`, `xp`)
+            VALUES ("{dId}",{exp});
+            """
+        cursor.execute(formatStr.format(dId=author,exp=1))
+    else:
+        cursor.execute("UPDATE users SET xp = " + (str)(result[0][1]+1) + " WHERE discordId = \"" + author + "\"")
+    DB.commit()
+
 
 @client.event
 async def on_message(message):
     # we do not want the bot to reply to itself
     if message.author == client.user:
         return
-    if message.content.startswith('Hello'):
-        msg = 'Hello {0.author.mention}'.format(message)
-        await client.send_message(message.channel, msg)
+    else:
+        await handleXp(message)
     if message.content.startswith('!'):
         await checkCommands(message)
 
@@ -53,7 +69,7 @@ async def on_ready():
     print('------')
     
 def connectToDB():
-    hst,dbname,u,pw=""
+    hst,dbname,u,pw = "","","",""
     if(os.path.exists("secrets.txt")):
         with open("secrets.txt",'r') as openFile:
             secrets = json.loads(openFile.read())
@@ -62,12 +78,14 @@ def connectToDB():
             u = secrets["db_user"]
             pw = secrets["db_pw"]
     DB = pymysql.connect(host=hst,user=u,password=pw,database=dbname) #connect to our database
-    cursor = DB.cursor()
-    #print("Database connected to!")
-    
-    return cursor
+    print("Database connected to!")
+    return DB
    
 if __name__ == '__main__':
+    bot = commands.Bot(command_prefix='!')
+    global DB,cursor
+    DB = connectToDB()
+    cursor = DB.cursor()
     token = ""
     if(os.path.exists("secrets.txt")):
         with open("secrets.txt",'r') as openFile:
