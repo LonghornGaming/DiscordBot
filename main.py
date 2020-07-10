@@ -38,17 +38,20 @@ async def handleXp(message):
     timeFormat = '%Y-%m-%d %H:%M:%S'
     cursor.execute("SELECT * FROM users WHERE discordId = \"" + author + "\"")
     result = cursor.fetchall()
+    milestoneCounter = 2
     assert not len(result) > 1, "more than one entry with the same discordId"
 
     now = datetime.datetime.now()
     ts = now.strftime(timeFormat)
+    xp = 1
+    elapsedMins = 0
 
     if(len(result) == 0): #if this is a new user, create a new entry with 1 xp in the database
         formatStr = """
             INSERT INTO users (`discordId`, `xp`, `lastUpdated`)
             VALUES ("{dId}",{exp},"{time}");
             """
-        cursor.execute(formatStr.format(dId=author,exp=1,time=ts))
+        cursor.execute(formatStr.format(dId=author,exp=xp,time=ts))
     else: #if this is a returning user, increment 1 xp into the database if it has been at least a minute
         xp = result[0][1]
         then = result[0][2]
@@ -58,7 +61,9 @@ async def handleXp(message):
             xp += 1
             cursor.execute("UPDATE users SET xp = " + (str)(xp) + ", lastUpdated = \"" + ts + "\" WHERE discordId = \"" + author + "\"")   
             DB.commit()
+    if(xp % milestoneCounter == 0): #tracking milestones (increments of 5 for debug purposes)
         await message.channel.send("<@" + author + "> has " + (str)(xp) + " xp!")
+    print("Author: " + author + " has " + (str)(xp) + " xp and was updated " + (str)(elapsedMins) + " minutes ago!")
 
 
 @client.event
