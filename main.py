@@ -17,8 +17,9 @@ async def checkCommands(message):
     command = message.content[1:].split(" ")
     base = command[0]
     print((str)(message.author.id) + " used " + base)
-    print(message.guild.text_channels)
     guild = message.guild
+    roles = guild.roles
+    members = guild.members
     channel = message.channel
     msg = ""
    
@@ -26,24 +27,28 @@ async def checkCommands(message):
     if(base == "d4"):
         msg = "<@103645519091355648> is a Hardstuck D4 Urgot Onetrick"
         await channel.send(msg)
-           
-async def authCheck(message,channel,authorizedUsers):
-    if(message.author.id not in authorizedUsers):
-        await channel.send("You do not have permission for this command.")
-        return False
-    return True
+    elif(base == "giveXp"):
+        memberRoles = message.author.roles
+        if(message.author.guild_permissions.administrator):
+            users = command[1]
+            amount = command[2]
+            if(users in roles):
+                for user in users.members:
+                    giveXp(user,amount,False)
+        permissionDenied(message,channel)
 
-async def handleXp(message):
-    author = (str)(message.author.id)
+def giveXp(user,amount,timePenalty):
     timeFormat = '%Y-%m-%d %H:%M:%S'
     cursor.execute("SELECT * FROM users WHERE discordId = \"" + author + "\"")
     result = cursor.fetchall()
-    milestoneCounter = 2
     assert not len(result) > 1, "more than one entry with the same discordId"
+
+    timeFormat = '%Y-%m-%d %H:%M:%S'
+    cursor.execute("SELECT * FROM users WHERE discordId = \"" + author + "\"")
+    result = cursor.fetchall()
 
     now = datetime.datetime.now()
     ts = now.strftime(timeFormat)
-    xp = 1
     elapsedMins = 0
 
     if(len(result) == 0): #if this is a new user, create a new entry with 1 xp in the database
@@ -61,10 +66,16 @@ async def handleXp(message):
             xp += 1
             cursor.execute("UPDATE users SET xp = " + (str)(xp) + ", lastUpdated = \"" + ts + "\" WHERE discordId = \"" + author + "\"")   
             DB.commit()
+           
+async def permissionDenied(message,channel):
+    await channel.send("You do not have permission for this command.")
+
+async def xpPerMessage(message):
+    xp = giveXp(author,xp,True)    
+    milestoneCounter = 2
     if(xp % milestoneCounter == 0): #tracking milestones (increments of 5 for debug purposes)
         await message.channel.send("<@" + author + "> has " + (str)(xp) + " xp!")
     print("Author: " + author + " has " + (str)(xp) + " xp and was updated " + (str)(elapsedMins) + " minutes ago!")
-
 
 @client.event
 async def on_message(message):
