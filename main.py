@@ -26,26 +26,41 @@ async def checkCommands(message):
         print(role)
    
     #enter switchcase for commands
-    if(base == "d4"):
+    if(base == "d4"): #ex: !d4
         msg = "<@103645519091355648> is a Hardstuck D4 Urgot Onetrick"
         await channel.send(msg)
-    elif(base == "giveXp"):
+    elif(base == "giveXp"): #ex: !giveXp @insert_role_or_user_here 10
         if(adminCheck(message.author)): #if the user of this command is an admin
-            wrappedId = command[1] #assuming this is in the format <@&______> where _____ is the id
-            usersId = wrappedId[3:len(wrappedId)-1]
-            print(usersId)
-            users = guild.get_role((int)(usersId))
-            amount = command[2]
-            print("Users: " + (str)(users))
-            if(users in roles): #if we're using a role for this command
-                for user in users.members:
-                    giveXp((str)(user.id),(int)(amount),False)
+            wrappedId = command[1] #this is in the format <@&_____> or <@!_____> _____ is the id
+            amount = (int)(command[2]) #this is just a string number turned into an int
+            discordId = (int)(wrappedId[3:len(wrappedId)-1]) #convert to a discord id
+
+            if("&" in wrappedId): #if we're using a role for this commandif(users in roles): 
+                role = guild.get_role(discordId)
+                if(role): #if the role is valid
+                    for user in role.members:
+                        giveXp((str)(user.id),amount,False)      
+                else:
+                    await message.channel.send("Invalid role id sent.")
+            elif("!" in wrappedId): #if we're using a single user for this command instead
+                user = guild.get_member(discordId)
+                if(user):
+                    giveXp((str)(user.id),amount,False)
+                else:
+                    await message.channel.send("Invalid user id sent.")
+            else:
+                await message.channel.send("Invalid user/role id sent.")
         else:
             await permissionDenied(message,channel)
 
 def adminCheck(user):
     return user.guild_permissions.administrator
 
+"""
+userId (str)       : a string of the id of a user/member object
+amount (int)       : the amount of xp to give to the user
+timePenalty (bool) : should this xp incur a time penalty on the next addition of xp? 
+"""
 def giveXp(userId,amount,timePenalty):
     timeFormat = '%Y-%m-%d %H:%M:%S'
     cursor.execute("SELECT * FROM users WHERE discordId = \"" + userId + "\"")
@@ -95,13 +110,13 @@ async def on_message(message):
     # we do not want the bot to reply to itself
     if message.author == client.user:
         return
-    else:
-        await xpPerMessage(message)
     if message.content.startswith('Hello'):
         msg = 'Hello {0.author.mention}'.format(message)
         await channel.send(msg)
     if message.content.startswith('!'):
         await checkCommands(message)
+    else:
+        await xpPerMessage(message)
 
 @client.event
 async def on_ready():
