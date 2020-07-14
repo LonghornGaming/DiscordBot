@@ -22,20 +22,29 @@ async def checkCommands(message):
     members = guild.members
     channel = message.channel
     msg = ""
+    for role in roles:
+        print(role)
    
     #enter switchcase for commands
     if(base == "d4"):
         msg = "<@103645519091355648> is a Hardstuck D4 Urgot Onetrick"
         await channel.send(msg)
     elif(base == "giveXp"):
-        memberRoles = message.author.roles
-        if(message.author.guild_permissions.administrator):
-            users = command[1]
+        if(adminCheck(message.author)): #if the user of this command is an admin
+            wrappedId = command[1] #assuming this is in the format <@&______> where _____ is the id
+            usersId = wrappedId[3:len(wrappedId)-1]
+            print(usersId)
+            users = guild.get_role((int)(usersId))
             amount = command[2]
-            if(users in roles):
+            print("Users: " + (str)(users))
+            if(users in roles): #if we're using a role for this command
                 for user in users.members:
-                    giveXp(user,amount,False)
-        permissionDenied(message,channel)
+                    giveXp((str)(user.id),(int)(amount),False)
+        else:
+            await permissionDenied(message,channel)
+
+def adminCheck(user):
+    return user.guild_permissions.administrator
 
 def giveXp(userId,amount,timePenalty):
     timeFormat = '%Y-%m-%d %H:%M:%S'
@@ -64,7 +73,7 @@ def giveXp(userId,amount,timePenalty):
         else:
             elapsedMins = now.minute - then.minute
             print("This user was last updated " + (str)(elapsedMins) + " minutes ago!")
-            if(elapsedMins > 0):
+            if(elapsedMins < 1):
                 return xp
         cursor.execute("UPDATE users SET xp = " + (str)(xp) + ", lastUpdated = \"" + ts + "\" WHERE discordId = \"" + userId + "\"")   
         DB.commit()
