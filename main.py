@@ -98,8 +98,7 @@ async def permissionDenied(message,channel):
     await channel.send("You do not have permission for this command.")
 
 async def xpPerMessage(message):
-    rolecheck = False
-    val = 5  # magic number
+    xpPerMessage = 5  # magic number
     guild = message.guild
     roles = guild.roles
     author = (str)(message.author.id)
@@ -108,13 +107,9 @@ async def xpPerMessage(message):
         memberroles = message.author.roles
         for role in memberroles:
             if role in roles:
-                rolecheck = True
-                xp = giveXp(author, val * 1.2, False)
+                xpPerMessage = xpPerMessage * 1.2
                 break
-        if not rolecheck:
-            xp = giveXp(author, val, False)
-    else:
-        xp = giveXp(author, val, False)
+    xp = (int)(giveXp(author, xpPerMessage, False))
 
     milestoneCounter = 1
     if (xp % milestoneCounter == 0):  # tracking milestones (increments of 5 for debug purposes)
