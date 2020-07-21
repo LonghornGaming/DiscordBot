@@ -28,16 +28,21 @@ async def checkCommands(message: discord.Message) -> None:
     if(base == "d4"): #ex: !d4
         msg = "<@103645519091355648> is a Hardstuck D4 Urgot Onetrick"
         await channel.send(msg)
+
     elif(base == "blacklist"): #ex: !blacklist @channel
-        global blacklist
-        wrappedId = command[1] #this is in the format <@#_____> _____ is the channel id
-        bChannel = wrappedId[3:len(wrappedId)-1]
-        if(bChannel not in blacklist): #add it to the blacklist
-            blacklist.append((int)(bChannel))
-            await channel.send("<@" + bChannel + "> has been added to the blacklist.")
-        else: #remove it from the blacklist
-            blacklist.remove((int)(bChannel))
-            await channel.send("<@" + bChannel + "> has been removed from the blacklist.")
+        if(adminCheck(message.author)):
+            global blacklist
+            wrappedId = command[1] #this is in the format <@_____> _____ is the channel id
+            bChannel = (int)(wrappedId[2:len(wrappedId)-1])
+            if(bChannel not in blacklist): #add it to the blacklist
+                blacklist.append((int)(bChannel))
+                await channel.send(guild.get_channel(bChannel).mention + " has been added to the blacklist.")
+            else: #remove it from the blacklist
+                blacklist.remove((int)(bChannel))
+                await channel.send(guild.get_channel(bChannel).mention + " has been removed from the blacklist.")
+        else:
+            await permissionDenied(message,channel)
+
     elif(base == "claim"): #ex: !claim
         global canClaim, messageCounter
         if(canClaim):
@@ -48,6 +53,7 @@ async def checkCommands(message: discord.Message) -> None:
             await channel.send(message.author.mention + " claimed " + (str)(xpToClaim) + " xp!")
         else:
             await channel.send("Don't game the system, you can't claim until it pops up!")
+            
     elif(base == "giveXp"): #ex: !giveXp @insert_role_or_user_here 10
         if(adminCheck(message.author)): #if the user of this command is an admin
             wrappedId = command[1] #this is in the format <@&_____> or <@!_____> _____ is the id
@@ -74,9 +80,7 @@ async def checkCommands(message: discord.Message) -> None:
 
 def adminCheck(user: discord.User) -> bool:
     return user.guild_permissions.administrator
-"""
-randomClaimMessage()
-"""
+    
 async def randomClaimMessage(message: discord.Message) -> None:
     global messageCounter, canClaim
     messageCounter += 1
@@ -90,7 +94,6 @@ async def randomClaimMessage(message: discord.Message) -> None:
         if(val > rand and not canClaim):
             canClaim = True
             await message.channel.send("type !claim to get a small amount of xp!")
-
 
 """
 userId (str)       : a string of the id of a user/member object
@@ -155,7 +158,7 @@ async def xpPerMessage(message: discord.Message) -> None:
 async def on_message(message: discord.Message) -> None:
     global blacklist
     channel = message.channel
-    if(channel in blacklist):
+    if(channel.id in blacklist):
         return
     if message.author == client.user: #bot message, so don't do anything
         return
