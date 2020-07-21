@@ -10,10 +10,11 @@ import os
 import json
 import pymysql
 import datetime 
+import random
 
 client = discord.Client()
 
-async def checkCommands(message):
+async def checkCommands(message: discord.Message) -> None:
     command = message.content[1:].split(" ")
     base = command[0]
     print((str)(message.author.id) + " used " + base)
@@ -22,13 +23,31 @@ async def checkCommands(message):
     members = guild.members
     channel = message.channel
     msg = ""
-    for role in roles:
-        print(role)
    
     #enter switchcase for commands
     if(base == "d4"): #ex: !d4
         msg = "<@103645519091355648> is a Hardstuck D4 Urgot Onetrick"
         await channel.send(msg)
+    elif(base == "blacklist"): #ex: !blacklist @channel
+        global blacklist
+        wrappedId = command[1] #this is in the format <@#_____> _____ is the channel id
+        bChannel = wrappedId[3:len(wrappedId)-1]
+        if(bChannel not in blacklist): #add it to the blacklist
+            blacklist.append((int)(bChannel))
+            await channel.send("<@" + bChannel + "> has been added to the blacklist.")
+        else: #remove it from the blacklist
+            blacklist.remove((int)(bChannel))
+            await channel.send("<@" + bChannel + "> has been removed from the blacklist.")
+    elif(base == "claim"): #ex: !claim
+        global canClaim, messageCounter
+        if(canClaim):
+            xpToClaim = (int)(10 * (random.randrange(50,200))/100)
+            giveXp((str)(message.author.id), xpToClaim, False)
+            canClaim = False
+            messageCounter = 0
+            await channel.send(message.author.mention + " claimed " + (str)(xpToClaim) + " xp!")
+        else:
+            await channel.send("Don't game the system, you can't claim until it pops up!")
     elif(base == "giveXp"): #ex: !giveXp @insert_role_or_user_here 10
         if(adminCheck(message.author)): #if the user of this command is an admin
             wrappedId = command[1] #this is in the format <@&_____> or <@!_____> _____ is the id
@@ -53,15 +72,32 @@ async def checkCommands(message):
         else:
             await permissionDenied(message,channel)
 
-def adminCheck(user):
+def adminCheck(user: discord.User) -> bool:
     return user.guild_permissions.administrator
+"""
+randomClaimMessage()
+"""
+async def randomClaimMessage(message: discord.Message) -> None:
+    global messageCounter, canClaim
+    messageCounter += 1
+    rand = random.randrange(0,100)
+    minMessages = 3
+    val = (int)((messageCounter*100)/(minMessages*2)) #convert to a value between 0-100
+    print(messageCounter,val,rand)
+    if(messageCounter < minMessages): #start !claiming at this number
+        return messageCounter
+    else:
+        if(val > rand and not canClaim):
+            canClaim = True
+            await message.channel.send("type !claim to get a small amount of xp!")
+
 
 """
 userId (str)       : a string of the id of a user/member object
 amount (int)       : the amount of xp to give to the user
 timePenalty (bool) : should this xp incur a time penalty on the next addition of xp? 
 """
-def giveXp(userId,amount,timePenalty):
+def giveXp(userId: str, amount: int, timePenalty: bool) -> int:
     timeFormat = '%Y-%m-%d %H:%M:%S'
     cursor.execute("SELECT * FROM users WHERE discordId = \"" + userId + "\"")
     result = cursor.fetchall()
@@ -94,10 +130,10 @@ def giveXp(userId,amount,timePenalty):
         DB.commit()
     return xp
            
-async def permissionDenied(message,channel):
+async def permissionDenied(message: discord.Message, channel: discord.TextChannel) -> None:
     await channel.send("You do not have permission for this command.")
 
-async def xpPerMessage(message):
+async def xpPerMessage(message: discord.Message) -> None:
     xpPerMessage = 5  # magic number
     guild = message.guild
     roles = guild.roles
@@ -111,23 +147,26 @@ async def xpPerMessage(message):
                 break
     xp = (int)(giveXp(author, xpPerMessage, False))
 
-    milestoneCounter = 1
+    milestoneCounter = 10000000
     if (xp % milestoneCounter == 0):  # tracking milestones (increments of 5 for debug purposes)
         await message.channel.send("<@" + author + "> has " + (str)(xp) + " xp!")
 
 @client.event
-async def on_message(message):
+async def on_message(message: discord.Message) -> None:
+    global blacklist
     channel = message.channel
-    # we do not want the bot to reply to itself
-    if message.author == client.user:
+    if(channel in blacklist):
+        return
+    if message.author == client.user: #bot message, so don't do anything
         return
     if message.content.startswith('Hello'):
         msg = 'Hello {0.author.mention}'.format(message)
         await channel.send(msg)
-    if message.content.startswith('!'):
+    if message.content.startswith('!'): #command message
         await checkCommands(message)
-    else:
+    else: #regular chat message
         await xpPerMessage(message)
+        await randomClaimMessage(message)
 
 @client.event
 async def on_ready():
@@ -151,9 +190,12 @@ def connectToDB():
    
 if __name__ == '__main__':
     bot = commands.Bot(command_prefix='!')
-    global DB,cursor
+    global DB,cursor,messageCounter,canClaim,blacklist
     DB = connectToDB()
     cursor = DB.cursor()
+    messageCounter = 0
+    canClaim = False
+    blacklist = []
     token = ""
     if(os.path.exists("secrets.txt")):
         with open("secrets.txt",'r') as openFile:
