@@ -25,9 +25,22 @@ async def checkCommands(message: discord.Message) -> None:
     msg = ""
    
     #enter switchcase for commands
+
     if(base == "d4"): #ex: !d4
         msg = "<@103645519091355648> is a Hardstuck D4 Urgot Onetrick"
         await channel.send(msg)
+
+    elif(base == "memberCheck"): #ex !memberCheck
+        joinDates = {}
+        for m in members:
+            name = m.display_name
+            joinDate = m.joined_at
+            monthYear = (str)(joinDate.month) + "-" + (str)(joinDate.year)
+            if(monthYear not in joinDates):
+                joinDates[monthYear] = []
+            joinDates[monthYear].append(name)
+        for d in joinDates:
+            print(d,len(joinDates[d]))
 
     elif(base == "blacklist"): #ex: !blacklist @channel
         if(adminCheck(message.author)):
