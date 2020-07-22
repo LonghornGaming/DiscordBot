@@ -43,7 +43,7 @@ async def checkCommands(message: discord.Message) -> None:
         else:
             await permissionDenied(message,channel)
 
-    elif(base == "claim"): #ex: !claim
+    elif(base == "claim"): #ex: !claim (only works when the bot signals you're able to)
         global canClaim, messageCounter
         if(canClaim):
             xpToClaim = (int)(10 * (random.randrange(50,200))/100)
@@ -53,7 +53,7 @@ async def checkCommands(message: discord.Message) -> None:
             await channel.send(message.author.mention + " claimed " + (str)(xpToClaim) + " xp!")
         else:
             await channel.send("Don't game the system, you can't claim until it pops up!")
-            
+
     elif(base == "giveXp"): #ex: !giveXp @insert_role_or_user_here 10
         if(adminCheck(message.author)): #if the user of this command is an admin
             wrappedId = command[1] #this is in the format <@&_____> or <@!_____> _____ is the id
@@ -85,8 +85,9 @@ async def randomClaimMessage(message: discord.Message) -> None:
     global messageCounter, canClaim
     messageCounter += 1
     rand = random.randrange(0,100)
-    minMessages = 3
-    val = (int)((messageCounter*100)/(minMessages*2)) #convert to a value between 0-100
+    minMessages = 100
+    val = (int)((messageCounter*100)/(minMessages*2)) #convert to a value between 0-100. 
+    #50% chance per message at minMessages, 100% chance at minMessages*2
     print(messageCounter,val,rand)
     if(messageCounter < minMessages): #start !claiming at this number
         return messageCounter
@@ -172,13 +173,13 @@ async def on_message(message: discord.Message) -> None:
         await randomClaimMessage(message)
 
 @client.event
-async def on_ready():
+async def on_ready() -> None:
     print('Logged in as')
     print(client.user.name)
     print(client.user.id)
     print('------')
     
-def connectToDB():
+def connectToDB() -> None:
     hst,dbname,u,pw = "","","",""
     if(os.path.exists("secrets.txt")):
         with open("secrets.txt",'r') as openFile:
