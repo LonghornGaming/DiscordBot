@@ -48,6 +48,12 @@ async def checkCommands(message: discord.Message) -> None:
         with open("dump.json",'w') as outfile:
             outfile.write(json.dumps(sortedMessages))
 
+    elif(base == "profile"):
+        author = (str)(message.author.id)
+        cursor.execute("SELECT * FROM users WHERE discordId = \"" + author + "\"")
+        result = cursor.fetchall()
+        msg = "User " + "<@" + author + "> has **" + (str)(result[0][1]) + "** xp and is Tier **" + (str)(result[0][3]) + ".**"
+        await channel.send(msg)
 
     elif(base == "memberCheck"): #ex !memberCheck
         joinDates = {}
@@ -110,9 +116,11 @@ async def checkCommands(message: discord.Message) -> None:
         else:
             await permissionDenied(message,channel)
 
+
 def adminCheck(user: discord.User) -> bool:
     return user.guild_permissions.administrator
-    
+
+
 async def randomClaimMessage(message: discord.Message) -> None:
     global messageCounter, canClaim
     messageCounter += 1
@@ -165,9 +173,11 @@ def giveXp(userId: str, amount: int, timePenalty: bool) -> int:
         cursor.execute("UPDATE users SET xp = " + (str)(xp) + ", lastUpdated = \"" + ts + "\" WHERE discordId = \"" + userId + "\"")   
         DB.commit()
     return xp
-           
+
+
 async def permissionDenied(message: discord.Message, channel: discord.TextChannel) -> None:
     await channel.send("You do not have permission for this command.")
+
 
 async def xpPerMessage(message: discord.Message) -> None:
     xpPerMessage = 5  # magic number
@@ -183,9 +193,10 @@ async def xpPerMessage(message: discord.Message) -> None:
                 break
     xp = (int)(giveXp(author, xpPerMessage, False))
 
-    milestoneCounter = 10000000
-    if (xp % milestoneCounter == 0):  # tracking milestones (increments of 5 for debug purposes)
-        await message.channel.send("<@" + author + "> has " + (str)(xp) + " xp!")
+
+async def milestoneCheck(message: discord.Message) -> None:
+    print(0)
+
 
 @client.event
 async def on_message(message: discord.Message) -> None:
@@ -204,13 +215,15 @@ async def on_message(message: discord.Message) -> None:
         await xpPerMessage(message)
         await randomClaimMessage(message)
 
+
 @client.event
 async def on_ready() -> None:
     print('Logged in as')
     print(client.user.name)
     print(client.user.id)
     print('------')
-    
+
+
 def connectToDB() -> None:
     hst,dbname,u,pw = "","","",""
     if(os.path.exists("secrets.txt")):
@@ -223,7 +236,8 @@ def connectToDB() -> None:
     DB = pymysql.connect(host=hst,user=u,password=pw,database=dbname) #connect to our database
     print("Database connected to!")
     return DB
-   
+
+
 if __name__ == '__main__':
     bot = commands.Bot(command_prefix='!')
     global DB,cursor,messageCounter,canClaim,blacklist
