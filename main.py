@@ -11,6 +11,7 @@ import json
 import pymysql
 import datetime 
 import random
+import time
 
 client = discord.Client()
 
@@ -29,6 +30,24 @@ async def checkCommands(message: discord.Message) -> None:
     if(base == "d4"): #ex: !d4
         msg = "<@103645519091355648> is a Hardstuck D4 Urgot Onetrick"
         await channel.send(msg)
+
+    elif(base == "messageCheck"): #ex !messageCheck
+        messagesSent = {}
+        for c in guild.text_channels:
+            print(c.name,end=": ")
+            before = time.time()
+            cMessages = await c.history(limit=None).flatten()
+            for m in cMessages:
+                user = m.author.display_name
+                if user not in messagesSent:
+                    messagesSent[user] = 0
+                messagesSent[user] += 1
+            after = time.time()
+            print(after-before," : ",len(cMessages))
+        sortedMessages = sorted(messagesSent.items(), key=lambda kv: kv[1])
+        with open("dump.json",'w') as outfile:
+            outfile.write(json.dumps(sortedMessages))
+
 
     elif(base == "memberCheck"): #ex !memberCheck
         joinDates = {}
@@ -65,7 +84,7 @@ async def checkCommands(message: discord.Message) -> None:
             messageCounter = 0
             await channel.send(message.author.mention + " claimed " + (str)(xpToClaim) + " xp!")
         else:
-            await channel.send("Don't game the system, you can't claim until it pops up!")
+            await channel.send("Don't game the system, you can't claim xp until it pops up!")
 
     elif(base == "giveXp"): #ex: !giveXp @insert_role_or_user_here 10
         if(adminCheck(message.author)): #if the user of this command is an admin
