@@ -100,7 +100,7 @@ async def checkCommands(message: discord.Message) -> None:
         global canClaim, messageCounter
         if(canClaim):
             xpToClaim = (int)(10 * (random.randrange(50,200))/100)
-            giveXp((str)(message.author.id), xpToClaim, False)
+            await giveXp((str)(message.author.id), xpToClaim, False)
             canClaim = False
             messageCounter = 0
             await channel.send(message.author.mention + " claimed " + (str)(xpToClaim) + " xp!")
@@ -117,13 +117,13 @@ async def checkCommands(message: discord.Message) -> None:
                 role = guild.get_role(discordId)
                 if(role): #if the role is valid
                     for user in role.members:
-                        giveXp((str)(user.id),amount,False)      
+                        await giveXp((str)(user.id),amount,False)
                 else:
                     await message.channel.send("Invalid role id sent.")
             elif("!" in wrappedId): #if we're using a single user for this command instead
                 user = guild.get_member(discordId)
                 if(user):
-                    giveXp((str)(user.id),amount,False)
+                    await giveXp((str)(user.id),amount,False)
                 else:
                     await message.channel.send("Invalid user id sent.")
             else:
@@ -156,7 +156,7 @@ userId (str)       : a string of the id of a user/member object
 amount (int)       : the amount of xp to give to the user
 timePenalty (bool) : should this xp incur a time penalty on the next addition of xp? 
 """
-def giveXp(userId: str, amount: int, timePenalty: bool) -> int:
+async def giveXp(userId: str, amount: int, timePenalty: bool) -> int:
     timeFormat = '%Y-%m-%d %H:%M:%S'
     cursor.execute("SELECT * FROM users WHERE discordId = \"" + userId + "\"")
     result = cursor.fetchall()
@@ -178,6 +178,7 @@ def giveXp(userId: str, amount: int, timePenalty: bool) -> int:
     else: #if this is a returning user
         xp += result[0][1]
         then = result[0][2]
+        tier = result[0][3]
         if(not timePenalty):
             ts = then.strftime(timeFormat)
         else:
@@ -185,6 +186,9 @@ def giveXp(userId: str, amount: int, timePenalty: bool) -> int:
             print("This user was last updated " + (str)(elapsedMins) + " minutes ago!")
             if(elapsedMins < 1):
                 return xp
+        tier = await milestoneCheck((int)(xp), tier, userId)
+        cursor.execute("UPDATE users SET xp = " + (str)(xp) + ", lastUpdated = \"" + ts + "\", tier = " + str(tier) +
+                       " WHERE discordId = \"" + userId + "\"")
         cursor.execute("UPDATE users SET xp = " + (str)(xp) + ", lastUpdated = \"" + ts + "\" WHERE discordId = \"" + userId + "\"")   
         DB.commit()
     return xp
@@ -192,6 +196,7 @@ def giveXp(userId: str, amount: int, timePenalty: bool) -> int:
 
 async def permissionDenied(message: discord.Message, channel: discord.TextChannel) -> None:
     await channel.send("You do not have permission for this command.")
+
 
 async def xpPerMessage(message: discord.Message) -> None:
     xpPerMessage = 5  # magic number
@@ -205,11 +210,28 @@ async def xpPerMessage(message: discord.Message) -> None:
             if role in roles:
                 xpPerMessage = xpPerMessage * 1.2
                 break
-    xp = (int)(giveXp(author, xpPerMessage, False))
+    xp = (int)(await giveXp(author, xpPerMessage, False))
 
 
-async def milestoneCheck(message: discord.Message) -> None:
-    print(0)
+@client.event
+async def milestoneCheck(xp: int, otier: int, uid: str) -> int:
+    print("this is xp: " + str(xp)) #used for debugging
+    ftier = 0 #final tier to return
+    if (os.path.exists("config.txt")):
+        with open("config.txt", 'r') as openFile:
+            tiers = json.loads(openFile.read())
+            for tier in tiers['tiers']: #creates the list of tiers to iterate through
+                for tiernum in tier["number"]: #checks each tier "number"
+                    if (int)(xp) >= (int)(tier["xp"]): #xp threshold check
+                        ftier = (int)(tiernum) #updates tier number if necessary
+                    else:
+                        break #stops from updating to wrong tier
+    if otier != ftier: #in the event there is a tier upgrade
+        print(uid) #debug
+        user = await bot.fetch_user((int)(uid)) #currently having problems here with dms
+        print(user) #debug
+        await user.send("Congrats! You've reached Tier **" + tier + "**!")
+    return ftier
 
 
 @client.event
