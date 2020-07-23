@@ -1,0 +1,6 @@
+{"tiers":[{"number":"0","xp":"0","reward":"None"},
+{"number":"1","xp":"30","reward":"TBD"},
+{"number":"2","xp":"90","reward":"TBD"},
+{"number":"3","xp":"180","reward":"TBD"},
+{"number":"4","xp":"300","reward":"TBD"},
+{"number":"5","xp":"360","reward":"TBD"}]}
