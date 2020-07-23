@@ -23,6 +23,7 @@ async def checkCommands(message: discord.Message) -> None:
     roles = guild.roles
     members = guild.members
     channel = message.channel
+    author = message.author
     msg = ""
    
     #enter switchcase for commands
@@ -30,6 +31,20 @@ async def checkCommands(message: discord.Message) -> None:
     if(base == "d4"): #ex: !d4
         msg = "<@103645519091355648> is a Hardstuck D4 Urgot Onetrick"
         await channel.send(msg)
+
+    elif(base == "leaderboard"): #ex !leaderboard
+        dms = author.dm_channel
+        if(not dms): #if there is a dm channel that already exists
+            print("Created dm channel for " + (str)(author.id))
+            dms = await author.create_dm()
+        cursor.execute("SELECT discordId, xp, tier FROM users ORDER BY xp DESC")
+        results = cursor.fetchall()
+        msg += "Longhorn Gaming Xp Leaderboard: ```"
+        for result in results:
+            name = guild.get_member((int)(result[0])).display_name
+            msg += name + ": " + (str)(result[1]) + " xp and tier " + (str)(result[2]) + "\n"
+        msg += "```"
+        await author.dm_channel.send(msg)
 
     elif(base == "messageCheck"): #ex !messageCheck
         messagesSent = {}
@@ -177,7 +192,6 @@ def giveXp(userId: str, amount: int, timePenalty: bool) -> int:
 
 async def permissionDenied(message: discord.Message, channel: discord.TextChannel) -> None:
     await channel.send("You do not have permission for this command.")
-
 
 async def xpPerMessage(message: discord.Message) -> None:
     xpPerMessage = 5  # magic number
