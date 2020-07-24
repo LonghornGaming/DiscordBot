@@ -15,10 +15,19 @@ import time
 
 client = discord.Client()
 
+def consoleLog(text: str) -> None:
+    with open("log.txt","a") as outfile:
+        timeFormat = '%Y-%m-%d %H:%M:%S'
+        now = datetime.datetime.now()
+        ts = now.strftime(timeFormat)
+        outfile.write((str)(ts) + ": ")
+        outfile.write((str)(text))
+        outfile.write("\n")
+
 async def checkCommands(message: discord.Message) -> None:
     command = message.content[1:].split(" ")
     base = command[0]
-    print((str)(message.author.id) + " used " + base)
+    consoleLog((str)(message.author.id) + " used " + base)
     guild = message.guild
     roles = guild.roles
     members = guild.members
@@ -37,8 +46,13 @@ async def checkCommands(message: discord.Message) -> None:
         if(not dms): #if there is a dm channel that already exists
             print("Created dm channel for " + (str)(author.id))
             dms = await author.create_dm()
+
+        DB = connectToDB() #this can be better, but for a later version
+        cursor = DB.cursor()
         cursor.execute("SELECT discordId, xp, tier FROM users ORDER BY xp DESC")
         results = cursor.fetchall()
+        DB.close()
+
         msg += "Longhorn Gaming Xp Leaderboard: ```"
         for result in results:
             name = guild.get_member((int)(result[0])).display_name
@@ -66,8 +80,12 @@ async def checkCommands(message: discord.Message) -> None:
 
     elif(base == "profile"):
         author = (str)(message.author.id)
+
+        DB = connectToDB() #this can be better, but for a later version
+        cursor = DB.cursor()
         cursor.execute("SELECT * FROM users WHERE discordId = \"" + author + "\"")
         result = cursor.fetchall()
+        DB.close()
         msg = "User " + "<@" + author + "> has **" + (str)(result[0][1]) + "** xp and is Tier **" + (str)(result[0][3]) + "**."
         await channel.send(msg)
 
@@ -137,7 +155,6 @@ async def checkCommands(message: discord.Message) -> None:
 def adminCheck(user: discord.User) -> bool:
     return user.guild_permissions.administrator
 
-
 async def randomClaimMessage(message: discord.Message) -> None:
     global messageCounter, canClaim
     messageCounter += 1
@@ -159,12 +176,14 @@ amount (int)       : the amount of xp to give to the user
 timePenalty (bool) : should this xp incur a time penalty on the next addition of xp? 
 """
 async def giveXp(message: discord.Message, amount: int, timePenalty: bool) -> int:
-    userId = message.author.id
-    timeFormat = '%Y-%m-%d %H:%M:%S'
-    cursor.execute("SELECT * FROM users WHERE discordId = \"" + (str)(userId) + "\"")
+    userId = (str)(message.author.id)
+    DB = connectToDB() #this can be better, but for a later version
+    cursor = DB.cursor()
+    cursor.execute("SELECT * FROM users WHERE discordId = \"" + userId + "\"")
     result = cursor.fetchall()
     assert not len(result) > 1, "more than one entry with the same discordId"
 
+    timeFormat = '%Y-%m-%d %H:%M:%S'
     now = datetime.datetime.now()
     ts = now.strftime(timeFormat)
     elapsedMins = 0
@@ -174,10 +193,10 @@ async def giveXp(message: discord.Message, amount: int, timePenalty: bool) -> in
         if(not timePenalty):
             ts = ts #hacky way to make sure there's no time penalty after this one
         formatStr = """
-            INSERT INTO users (`discordId`, `xp`, `lastUpdated`)
-            VALUES ("{dId}",{exp},"{time}");
+            INSERT INTO users (`discordId`, `xp`, `lastUpdated`,`tier`)
+            VALUES ("{dId}",{exp},"{time}",{t});
             """
-        cursor.execute(formatStr.format(dId=userId,exp=xp,time=ts))
+        cursor.execute(formatStr.format(dId=userId,exp=xp,time=ts,t=0))
     else: #if this is a returning user
         xp += result[0][1]
         then = result[0][2]
@@ -186,14 +205,15 @@ async def giveXp(message: discord.Message, amount: int, timePenalty: bool) -> in
             ts = then.strftime(timeFormat)
         else:
             elapsedMins = now.minute - then.minute
-            print("This user was last updated " + (str)(elapsedMins) + " minutes ago!")
+            consoleLog("This user was last updated " + (str)(elapsedMins) + " minutes ago!")
             if(elapsedMins < 1):
+                DB.close()
                 return xp
-        tier = await milestoneCheck(message, (int)(xp), tier, userId)
+        tier = await milestoneCheck(message, (int)(xp), tier)
         cursor.execute("UPDATE users SET xp = " + (str)(xp) + ", lastUpdated = \"" + ts + "\", tier = " + str(tier) +
                        " WHERE discordId = \"" + (str)(userId) + "\"")
-        cursor.execute("UPDATE users SET xp = " + (str)(xp) + ", lastUpdated = \"" + ts + "\" WHERE discordId = \"" + (str)(userId) + "\"")
-        DB.commit()
+    DB.commit()
+    DB.close()
     return xp
 
 
@@ -215,11 +235,10 @@ async def xpPerMessage(message: discord.Message) -> None:
                 #break
     xp = (int)(await giveXp(message, xpPerMessage, True))
 
-
 @client.event
-async def milestoneCheck(message: discord.Message, xp: int, otier: int, uid: str) -> int:
+async def milestoneCheck(message: discord.Message, xp: int, otier: int) -> int:
     author = message.author
-    print("this is xp: " + str(xp)) #used for debugging
+    #print("this is xp: " + str(xp)) #used for debugging
     ftier = 0 #final tier to return
     if (os.path.exists("config.txt")):
         with open("config.txt", 'r') as openFile:
@@ -233,11 +252,10 @@ async def milestoneCheck(message: discord.Message, xp: int, otier: int, uid: str
     if otier < ftier: #in the event there is a tier upgrade
         dms = author.dm_channel
         if (not dms):  # if there is a dm channel that already exists
-            print("Created dm channel for " + (str)(author.id))
+            consoleLog("Created dm channel for " + (str)(author.id))
             dms = await author.create_dm()
         await author.dm_channel.send("Congrats! You've reached Tier **" + (str)(ftier) + "**!")
     return ftier
-
 
 @client.event
 async def on_message(message: discord.Message) -> None:
@@ -247,9 +265,6 @@ async def on_message(message: discord.Message) -> None:
         return
     if message.author == client.user: #bot message, so don't do anything
         return
-    if message.content.startswith('Hello'):
-        msg = 'Hello {0.author.mention}'.format(message)
-        await channel.send(msg)
     if message.content.startswith('!'): #command message
         await checkCommands(message)
     else: #regular chat message
@@ -259,10 +274,11 @@ async def on_message(message: discord.Message) -> None:
 
 @client.event
 async def on_ready() -> None:
-    print('Logged in as')
-    print(client.user.name)
-    print(client.user.id)
-    print('------')
+    consoleLog('\nLogged in as')
+    consoleLog(client.user.name)
+    consoleLog(client.user.id)
+    consoleLog('------')
+    print("Launched.")
 
 
 def connectToDB() -> None:
@@ -275,15 +291,12 @@ def connectToDB() -> None:
             u = secrets["db_user"]
             pw = secrets["db_pw"]
     DB = pymysql.connect(host=hst,user=u,password=pw,database=dbname) #connect to our database
-    print("Database connected to!")
+    #print("Database connected to!")
     return DB
-
 
 if __name__ == '__main__':
     bot = commands.Bot(command_prefix='!')
-    global DB,cursor,messageCounter,canClaim,blacklist
-    DB = connectToDB()
-    cursor = DB.cursor()
+    global messageCounter,canClaim,blacklist
     messageCounter = 0
     canClaim = False
     blacklist = []
