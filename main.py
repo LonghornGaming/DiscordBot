@@ -38,13 +38,13 @@ async def checkCommands(message: discord.Message) -> None:
     #enter switchcase for commands
 
     if(base == "d4"): #ex: !d4
-        msg = "<@103645519091355648> is a Hardstuck D4 Urgot Onetrick"
+        msg = "CrusherCake is a Hardstuck D4 Urgot Onetrick"
         await channel.send(msg)
 
     elif(base == "leaderboard"): #ex !leaderboard
         dms = author.dm_channel
         if(not dms): #if there is a dm channel that already exists
-            print("Created dm channel for " + (str)(author.id))
+            consoleLog("Created dm channel for " + (str)(author.id))
             dms = await author.create_dm()
 
         DB = connectToDB() #this can be better, but for a later version
@@ -64,7 +64,7 @@ async def checkCommands(message: discord.Message) -> None:
         if (adminCheck(message.author)):
             messagesSent = {}
             for c in guild.text_channels:
-                print(c.name,end=": ")
+                #print(c.name,end=": ")
                 before = time.time()
                 cMessages = await c.history(limit=None).flatten()
                 for m in cMessages:
@@ -73,7 +73,7 @@ async def checkCommands(message: discord.Message) -> None:
                         messagesSent[user] = 0
                     messagesSent[user] += 1
                 after = time.time()
-                print(after-before," : ",len(cMessages))
+                #print(after-before," : ",len(cMessages))
             sortedMessages = sorted(messagesSent.items(), key=lambda kv: kv[1])
             with open("dump.json",'w') as outfile:
                 outfile.write(json.dumps(sortedMessages))
@@ -99,8 +99,8 @@ async def checkCommands(message: discord.Message) -> None:
                 if(monthYear not in joinDates):
                     joinDates[monthYear] = []
                 joinDates[monthYear].append(name)
-            for d in joinDates:
-                print(d,len(joinDates[d]))
+            # for d in joinDates:
+            #     print(d,len(joinDates[d]))
 
     elif(base == "blacklist"): #ex: !blacklist @channel
         if(adminCheck(message.author)):
@@ -119,7 +119,8 @@ async def checkCommands(message: discord.Message) -> None:
     elif(base == "claim"): #ex: !claim (only works when the bot signals you're able to)
         global canClaim, messageCounter
         if(canClaim):
-            xpToClaim = (int)(10 * (random.randrange(50,200))/100)
+            xpToClaim = (int)(15 * (random.randrange(50,200))/100)
+            xpToClaim = 5 * round(xpToClaim/5)  
             await giveXp(message, xpToClaim, False)
             canClaim = False
             messageCounter = 0
@@ -162,7 +163,6 @@ async def randomClaimMessage(message: discord.Message) -> None:
     minMessages = 100
     val = (int)((messageCounter*100)/(minMessages*2)) #convert to a value between 0-100. 
     #50% chance per message at minMessages, 100% chance at minMessages*2
-    print(messageCounter,val,rand)
     if(messageCounter < minMessages): #start !claiming at this number
         return messageCounter
     else:
@@ -216,10 +216,8 @@ async def giveXp(message: discord.Message, amount: int, timePenalty: bool) -> in
     DB.close()
     return xp
 
-
 async def permissionDenied(message: discord.Message, channel: discord.TextChannel) -> None:
     await channel.send("You do not have permission for this command.")
-
 
 async def xpPerMessage(message: discord.Message) -> None:
     xpPerMessage = 5  # magic number
@@ -274,7 +272,7 @@ async def on_message(message: discord.Message) -> None:
 
 @client.event
 async def on_ready() -> None:
-    consoleLog('\nLogged in as')
+    consoleLog('Logged in as')
     consoleLog(client.user.name)
     consoleLog(client.user.id)
     consoleLog('------')
