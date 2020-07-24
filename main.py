@@ -47,21 +47,22 @@ async def checkCommands(message: discord.Message) -> None:
         await author.dm_channel.send(msg)
 
     elif(base == "messageCheck"): #ex !messageCheck
-        messagesSent = {}
-        for c in guild.text_channels:
-            print(c.name,end=": ")
-            before = time.time()
-            cMessages = await c.history(limit=None).flatten()
-            for m in cMessages:
-                user = m.author.display_name
-                if user not in messagesSent:
-                    messagesSent[user] = 0
-                messagesSent[user] += 1
-            after = time.time()
-            print(after-before," : ",len(cMessages))
-        sortedMessages = sorted(messagesSent.items(), key=lambda kv: kv[1])
-        with open("dump.json",'w') as outfile:
-            outfile.write(json.dumps(sortedMessages))
+        if (adminCheck(message.author)):
+            messagesSent = {}
+            for c in guild.text_channels:
+                print(c.name,end=": ")
+                before = time.time()
+                cMessages = await c.history(limit=None).flatten()
+                for m in cMessages:
+                    user = m.author.display_name
+                    if user not in messagesSent:
+                        messagesSent[user] = 0
+                    messagesSent[user] += 1
+                after = time.time()
+                print(after-before," : ",len(cMessages))
+            sortedMessages = sorted(messagesSent.items(), key=lambda kv: kv[1])
+            with open("dump.json",'w') as outfile:
+                outfile.write(json.dumps(sortedMessages))
 
     elif(base == "profile"):
         author = (str)(message.author.id)
@@ -71,16 +72,17 @@ async def checkCommands(message: discord.Message) -> None:
         await channel.send(msg)
 
     elif(base == "memberCheck"): #ex !memberCheck
-        joinDates = {}
-        for m in members:
-            name = m.display_name
-            joinDate = m.joined_at
-            monthYear = (str)(joinDate.month) + "-" + (str)(joinDate.year)
-            if(monthYear not in joinDates):
-                joinDates[monthYear] = []
-            joinDates[monthYear].append(name)
-        for d in joinDates:
-            print(d,len(joinDates[d]))
+        if (adminCheck(message.author)):
+            joinDates = {}
+            for m in members:
+                name = m.display_name
+                joinDate = m.joined_at
+                monthYear = (str)(joinDate.month) + "-" + (str)(joinDate.year)
+                if(monthYear not in joinDates):
+                    joinDates[monthYear] = []
+                joinDates[monthYear].append(name)
+            for d in joinDates:
+                print(d,len(joinDates[d]))
 
     elif(base == "blacklist"): #ex: !blacklist @channel
         if(adminCheck(message.author)):
@@ -205,13 +207,13 @@ async def xpPerMessage(message: discord.Message) -> None:
     roles = guild.roles
     author = (str)(message.author.id)
 
-    if adminCheck(message.author):
-        memberroles = message.author.roles
-        for role in memberroles:
-            if role in roles:
-                xpPerMessage = xpPerMessage * 1.2
-                break
-    xp = (int)(await giveXp(message, xpPerMessage, False))
+    #if adminCheck(message.author):
+        #memberroles = message.author.roles
+        #for role in memberroles:
+            #if role in roles:
+                #xpPerMessage = xpPerMessage * 1.2
+                #break
+    xp = (int)(await giveXp(message, xpPerMessage, True))
 
 
 @client.event
