@@ -37,8 +37,13 @@ async def checkCommands(message: discord.Message) -> None:
         if(not dms): #if there is a dm channel that already exists
             print("Created dm channel for " + (str)(author.id))
             dms = await author.create_dm()
+
+        DB = connectToDB() #this can be better, but for a later version
+        cursor = DB.cursor()
         cursor.execute("SELECT discordId, xp, tier FROM users ORDER BY xp DESC")
         results = cursor.fetchall()
+        DB.close()
+
         msg += "Longhorn Gaming Xp Leaderboard: ```"
         for result in results:
             name = guild.get_member((int)(result[0])).display_name
@@ -65,8 +70,13 @@ async def checkCommands(message: discord.Message) -> None:
 
     elif(base == "profile"):
         author = (str)(message.author.id)
+
+        DB = connectToDB() #this can be better, but for a later version
+        cursor = DB.cursor()
         cursor.execute("SELECT * FROM users WHERE discordId = \"" + author + "\"")
         result = cursor.fetchall()
+        DB.close()
+
         msg = "User " + "<@" + author + "> has **" + (str)(result[0][1]) + "** xp and is Tier **" + (str)(result[0][3]) + ".**"
         await channel.send(msg)
 
@@ -135,7 +145,6 @@ async def checkCommands(message: discord.Message) -> None:
 def adminCheck(user: discord.User) -> bool:
     return user.guild_permissions.administrator
 
-
 async def randomClaimMessage(message: discord.Message) -> None:
     global messageCounter, canClaim
     messageCounter += 1
@@ -158,6 +167,8 @@ timePenalty (bool) : should this xp incur a time penalty on the next addition of
 """
 def giveXp(userId: str, amount: int, timePenalty: bool) -> int:
     timeFormat = '%Y-%m-%d %H:%M:%S'
+    DB = connectToDB() #this can be better, but for a later version
+    cursor = DB.cursor()
     cursor.execute("SELECT * FROM users WHERE discordId = \"" + userId + "\"")
     result = cursor.fetchall()
     assert not len(result) > 1, "more than one entry with the same discordId"
@@ -184,9 +195,11 @@ def giveXp(userId: str, amount: int, timePenalty: bool) -> int:
             elapsedMins = now.minute - then.minute
             print("This user was last updated " + (str)(elapsedMins) + " minutes ago!")
             if(elapsedMins < 1):
+                DB.close()
                 return xp
         cursor.execute("UPDATE users SET xp = " + (str)(xp) + ", lastUpdated = \"" + ts + "\" WHERE discordId = \"" + userId + "\"")   
-        DB.commit()
+    DB.commit()
+    DB.close()
     return xp
 
 
@@ -207,10 +220,8 @@ async def xpPerMessage(message: discord.Message) -> None:
                 break
     xp = (int)(giveXp(author, xpPerMessage, False))
 
-
 async def milestoneCheck(message: discord.Message) -> None:
     print(0)
-
 
 @client.event
 async def on_message(message: discord.Message) -> None:
@@ -248,15 +259,12 @@ def connectToDB() -> None:
             u = secrets["db_user"]
             pw = secrets["db_pw"]
     DB = pymysql.connect(host=hst,user=u,password=pw,database=dbname) #connect to our database
-    print("Database connected to!")
+    #print("Database connected to!")
     return DB
-
 
 if __name__ == '__main__':
     bot = commands.Bot(command_prefix='!')
-    global DB,cursor,messageCounter,canClaim,blacklist
-    DB = connectToDB()
-    cursor = DB.cursor()
+    global messageCounter,canClaim,blacklist
     messageCounter = 0
     canClaim = False
     blacklist = []
