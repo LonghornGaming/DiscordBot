@@ -3,4 +3,9 @@
 {"number":"2","xp":"450","reward":"TBD"},
 {"number":"3","xp":"900","reward":"TBD"},
 {"number":"4","xp":"1500","reward":"TBD"},
-{"number":"5","xp":"2250","reward":"TBD"}]}
+{"number":"5","xp":"2250","reward":"TBD"},
+{"number":"6","xp":"3150","reward":"TBD"},
+{"number":"7","xp":"4200","reward":"TBD"},
+{"number":"8","xp":"5400","reward":"TBD"},
+{"number":"9","xp":"6750","reward":"TBD"},
+{"number":"10","xp":"8250","reward":"TBD"}]}
