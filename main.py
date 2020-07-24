@@ -109,9 +109,13 @@ async def checkCommands(message: discord.Message) -> None:
             bChannel = (int)(wrappedId[2:len(wrappedId)-1])
             if(bChannel not in blacklist): #add it to the blacklist
                 blacklist.append((int)(bChannel))
+                with open("blacklist.txt",'w') as openFile:
+                    openFile.write(json.dumps(blacklist))
                 await channel.send(guild.get_channel(bChannel).mention + " has been added to the blacklist.")
             else: #remove it from the blacklist
                 blacklist.remove((int)(bChannel))
+                with open("blacklist.txt",'w') as openFile:
+                    openFile.write(json.dumps(blacklist))
                 await channel.send(guild.get_channel(bChannel).mention + " has been removed from the blacklist.")
         else:
             await permissionDenied(message,channel)
@@ -297,7 +301,10 @@ if __name__ == '__main__':
     global messageCounter,canClaim,blacklist
     messageCounter = 0
     canClaim = False
-    blacklist = []
+    with open("blacklist.txt",'r') as openFile:
+        blacklist = json.loads(openFile.read())
+    consoleLog("Blacklist: ")
+    consoleLog(blacklist)
     token = ""
     if(os.path.exists("secrets.txt")):
         with open("secrets.txt",'r') as openFile:
