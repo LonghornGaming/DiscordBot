@@ -1,6 +1,6 @@
 {"tiers":[{"number":"0","xp":"0","reward":"None"},
-{"number":"1","xp":"30","reward":"TBD"},
-{"number":"2","xp":"90","reward":"TBD"},
-{"number":"3","xp":"180","reward":"TBD"},
-{"number":"4","xp":"300","reward":"TBD"},
-{"number":"5","xp":"450","reward":"TBD"}]}
+{"number":"1","xp":"150","reward":"TBD"},
+{"number":"2","xp":"450","reward":"TBD"},
+{"number":"3","xp":"900","reward":"TBD"},
+{"number":"4","xp":"1500","reward":"TBD"},
+{"number":"5","xp":"2250","reward":"TBD"}]}
