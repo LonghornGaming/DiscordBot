@@ -67,7 +67,7 @@ async def checkCommands(message: discord.Message) -> None:
         author = (str)(message.author.id)
         cursor.execute("SELECT * FROM users WHERE discordId = \"" + author + "\"")
         result = cursor.fetchall()
-        msg = "User " + "<@" + author + "> has **" + (str)(result[0][1]) + "** xp and is Tier **" + (str)(result[0][3]) + ".**"
+        msg = "User " + "<@" + author + "> has **" + (str)(result[0][1]) + "** xp and is Tier **" + (str)(result[0][3]) + "**."
         await channel.send(msg)
 
     elif(base == "memberCheck"): #ex !memberCheck
@@ -100,7 +100,7 @@ async def checkCommands(message: discord.Message) -> None:
         global canClaim, messageCounter
         if(canClaim):
             xpToClaim = (int)(10 * (random.randrange(50,200))/100)
-            await giveXp((str)(message.author.id), xpToClaim, False)
+            await giveXp(message, xpToClaim, False)
             canClaim = False
             messageCounter = 0
             await channel.send(message.author.mention + " claimed " + (str)(xpToClaim) + " xp!")
@@ -117,13 +117,13 @@ async def checkCommands(message: discord.Message) -> None:
                 role = guild.get_role(discordId)
                 if(role): #if the role is valid
                     for user in role.members:
-                        await giveXp((str)(user.id),amount,False)
+                        await giveXp(message,amount,False)
                 else:
                     await message.channel.send("Invalid role id sent.")
             elif("!" in wrappedId): #if we're using a single user for this command instead
                 user = guild.get_member(discordId)
                 if(user):
-                    await giveXp((str)(user.id),amount,False)
+                    await giveXp(message,amount,False)
                 else:
                     await message.channel.send("Invalid user id sent.")
             else:
@@ -156,9 +156,10 @@ userId (str)       : a string of the id of a user/member object
 amount (int)       : the amount of xp to give to the user
 timePenalty (bool) : should this xp incur a time penalty on the next addition of xp? 
 """
-async def giveXp(userId: str, amount: int, timePenalty: bool) -> int:
+async def giveXp(message: discord.Message, amount: int, timePenalty: bool) -> int:
+    userId = message.author.id
     timeFormat = '%Y-%m-%d %H:%M:%S'
-    cursor.execute("SELECT * FROM users WHERE discordId = \"" + userId + "\"")
+    cursor.execute("SELECT * FROM users WHERE discordId = \"" + (str)(userId) + "\"")
     result = cursor.fetchall()
     assert not len(result) > 1, "more than one entry with the same discordId"
 
@@ -186,10 +187,10 @@ async def giveXp(userId: str, amount: int, timePenalty: bool) -> int:
             print("This user was last updated " + (str)(elapsedMins) + " minutes ago!")
             if(elapsedMins < 1):
                 return xp
-        tier = await milestoneCheck((int)(xp), tier, userId)
+        tier = await milestoneCheck(message, (int)(xp), tier, userId)
         cursor.execute("UPDATE users SET xp = " + (str)(xp) + ", lastUpdated = \"" + ts + "\", tier = " + str(tier) +
-                       " WHERE discordId = \"" + userId + "\"")
-        cursor.execute("UPDATE users SET xp = " + (str)(xp) + ", lastUpdated = \"" + ts + "\" WHERE discordId = \"" + userId + "\"")   
+                       " WHERE discordId = \"" + (str)(userId) + "\"")
+        cursor.execute("UPDATE users SET xp = " + (str)(xp) + ", lastUpdated = \"" + ts + "\" WHERE discordId = \"" + (str)(userId) + "\"")
         DB.commit()
     return xp
 
@@ -210,11 +211,12 @@ async def xpPerMessage(message: discord.Message) -> None:
             if role in roles:
                 xpPerMessage = xpPerMessage * 1.2
                 break
-    xp = (int)(await giveXp(author, xpPerMessage, False))
+    xp = (int)(await giveXp(message, xpPerMessage, False))
 
 
 @client.event
-async def milestoneCheck(xp: int, otier: int, uid: str) -> int:
+async def milestoneCheck(message: discord.Message, xp: int, otier: int, uid: str) -> int:
+    author = message.author
     print("this is xp: " + str(xp)) #used for debugging
     ftier = 0 #final tier to return
     if (os.path.exists("config.txt")):
@@ -226,11 +228,12 @@ async def milestoneCheck(xp: int, otier: int, uid: str) -> int:
                         ftier = (int)(tiernum) #updates tier number if necessary
                     else:
                         break #stops from updating to wrong tier
-    if otier != ftier: #in the event there is a tier upgrade
-        print(uid) #debug
-        user = await bot.fetch_user((int)(uid)) #currently having problems here with dms
-        print(user) #debug
-        await user.send("Congrats! You've reached Tier **" + tier + "**!")
+    if otier < ftier: #in the event there is a tier upgrade
+        dms = author.dm_channel
+        if (not dms):  # if there is a dm channel that already exists
+            print("Created dm channel for " + (str)(author.id))
+            dms = await author.create_dm()
+        await author.dm_channel.send("Congrats! You've reached Tier **" + (str)(ftier) + "**!")
     return ftier
 
 
