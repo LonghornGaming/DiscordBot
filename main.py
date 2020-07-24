@@ -60,6 +60,19 @@ async def checkCommands(message: discord.Message) -> None:
         msg += "```"
         await author.dm_channel.send(msg)
 
+    elif (base == "help"):  # ex !leaderboard
+        dms = author.dm_channel
+        if (not dms):  # if there is a dm channel that already exists
+            consoleLog("Created dm channel for " + (str)(author.id))
+            dms = await author.create_dm()
+
+        msg += "```Howdy! I'm a bot created for the Longhorn Gaming Discord. Below are my commands:\n"
+        msg += "!claim:       When the message comes up, type this for XP!\n"
+        msg += "!help:        You're already here!\n"
+        msg += "!leaderboard: Check to see where you rank on the leaderboard!\n"
+        msg += "!profile:     Check your XP and Tier.```"
+        await author.dm_channel.send(msg)
+
     elif(base == "messageCheck"): #ex !messageCheck
         if (adminCheck(message.author)):
             messagesSent = {}
