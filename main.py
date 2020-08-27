@@ -14,6 +14,13 @@ import random
 import time
 
 client = discord.Client()
+#messageCounter,canClaim,blacklist,claimMessage,claimEmoji
+messageCounter = 0
+canClaim = False
+claimEmoji = ""
+claimMessage = ""
+with open("blacklist.txt",'r') as openFile:
+    blacklist = json.loads(openFile.read())
 
 def consoleLog(text: str) -> None:
     with open("log.txt","a") as outfile:
@@ -152,7 +159,6 @@ async def checkCommands(message: discord.Message) -> None:
 
     elif(base == "blacklist"): #ex: !blacklist @channel
         if(adminCheck(message.author)):
-            global blacklist
             wrappedId = command[1] #this is in the format <@_____> _____ is the channel id
             bChannel = (int)(wrappedId[2:len(wrappedId)-1])
             if(bChannel not in blacklist): #add it to the blacklist
@@ -177,14 +183,13 @@ async def checkCommands(message: discord.Message) -> None:
                 usedEmojis.append(emojis[rand])
                 x += 1
         rand = random.randrange(0,len(usedEmojis))
-        claimMessage = await channel.send("Be the first to react with " + (str)(usedEmojis[rand]) + " to claim a small amount of xp!")
+        claimEmoji = usedEmojis[rand]
+        canClaim = True
+        claimMessage = await channel.send("Be the first to react with " + (str)(claimEmoji) + " to claim a small amount of xp!")
         for emoji in usedEmojis:
             await claimMessage.add_reaction(emoji)
 
-        await client.wait_for('reaction_add', timeout=30.0)
-
     elif(base == "claim"): #ex: !claim (only works when the bot signals you're able to)
-        global canClaim, messageCounter
         if(canClaim):
             xpToClaim = (int)(15 * (random.randrange(50,200))/100)
             xpToClaim = 5 * round(xpToClaim/5)  
@@ -224,7 +229,6 @@ def adminCheck(user: discord.User) -> bool:
     return user.guild_permissions.administrator
 
 async def randomClaimMessage(message: discord.Message) -> None:
-    global messageCounter, canClaim
     messageCounter += 1
     rand = random.randrange(0,100)
     minMessages = 100
@@ -327,7 +331,6 @@ async def milestoneCheck(message: discord.Message, xp: int, otier: int) -> int:
 
 @client.event
 async def on_message(message: discord.Message) -> None:
-    global blacklist
     channel = message.channel
     if(channel.id in blacklist):
         return
@@ -339,6 +342,17 @@ async def on_message(message: discord.Message) -> None:
         await xpPerMessage(message)
         await randomClaimMessage(message)
 
+@client.event
+async def on_reaction_add(reaction, user):
+    if user == client.user: #bot message, so don't do anything
+        return
+    if(canClaim):
+        message = reaction.message
+        channel = message.channel
+        if(reaction == claimEmoji):
+            canClaim = False
+            await client.send_message(channel, "cool.")
+    channel = reaction.message.channel
 
 @client.event
 async def on_ready() -> None:
@@ -364,16 +378,11 @@ def connectToDB() -> None:
 
 if __name__ == '__main__':
     bot = commands.Bot(command_prefix='!')
-    global messageCounter,canClaim,blacklist
-    messageCounter = 0
-    canClaim = False
-    with open("blacklist.txt",'r') as openFile:
-        blacklist = json.loads(openFile.read())
-    consoleLog("Blacklist: ")
-    consoleLog(blacklist)
     token = ""
     if(os.path.exists("secrets.txt")):
         with open("secrets.txt",'r') as openFile:
             secrets = json.loads(openFile.read())
             token = secrets["token"] 
+    consoleLog("Blacklist: ")
+    consoleLog(blacklist)
     client.run(token)
