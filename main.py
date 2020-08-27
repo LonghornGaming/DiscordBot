@@ -155,6 +155,8 @@ async def checkCommands(message: discord.Message) -> None:
         for emoji in usedEmojis:
             await claimMessage.add_reaction(emoji)
 
+        await client.wait_for('reaction_add', timeout=30.0)
+
     elif(base == "claim"): #ex: !claim (only works when the bot signals you're able to)
         global canClaim, messageCounter
         if(canClaim):
