@@ -170,9 +170,16 @@ async def checkCommands(message: discord.Message) -> None:
 
     elif(base == "claimDebug"):
         usedEmojis = []
-        claimMessage = await channel.send("This is a test of the new claim system! React with something!")
-        rand = randomrange(0,len(emojis))
-        await claimMessage.add_reaction(emojis[0])
+        x = 0
+        while x < 3:
+            rand = random.randrange(0,len(emojis))
+            if(emojis[rand] not in usedEmojis):
+                usedEmojis.append(emojis[rand])
+                x += 1
+        rand = random.randrange(0,len(usedEmojis))
+        claimMessage = await channel.send("Be the first to react with " + (str)(usedEmojis[rand]) + " to claim a small amount of xp!")
+        for emoji in usedEmojis:
+            await claimMessage.add_reaction(emoji)
 
     elif(base == "claim"): #ex: !claim (only works when the bot signals you're able to)
         global canClaim, messageCounter
