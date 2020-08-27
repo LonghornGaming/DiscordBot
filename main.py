@@ -66,6 +66,32 @@ async def checkCommands(message: discord.Message) -> None:
         if(len(msg) > 10): #if there's actually a name in this message, send it
             await author.dm_channel.send(msg)
 
+
+    elif(base == "leaderboardDebug"):
+        if (adminCheck(message.author)):
+            DB = connectToDB()  # this can be better, but for a later version
+            cursor = DB.cursor()
+            cursor.execute("SELECT discordId, xp, tier FROM users ORDER BY xp DESC")
+            results = cursor.fetchall()
+            DB.close()
+
+            rank = results.index((author,))
+
+            msg += "Longhorn Gaming XP Leaderboard: ```"
+            for counter, result in enumerate(results):
+                name = guild.get_member((int)(result[0])).display_name
+                msg += name + ": " + (str)(result[1]) + " xp and tier " + (str)(result[2]) + "\n"
+                if(counter >= 5):
+                    break
+            msg += ". . . \n"
+            for counter, result in enumerate(results):
+                if(counter > (rank-3) and counter < (rank+3)):
+                    name = guild.get_member((int)(result[0])).display_name
+                    msg += name + ": " + (str)(result[1]) + " xp and tier " + (str)(result[2]) + "\n"
+
+            msg += "```"
+
+
     elif (base == "help"):  # ex !leaderboard
         dms = author.dm_channel
         if (not dms):  # if there is a dm channel that already exists
