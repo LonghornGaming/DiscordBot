@@ -78,7 +78,7 @@ async def checkCommands(message: discord.Message) -> None:
                 for i in range(counter-3, counter+2):
                     result = results[i]
                     name = guild.get_member((int)(result[0])).display_name
-                    msg += (str)(i) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
+                    msg += (str)(i+1) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
                             (str)(result[2]) + "\n"
 
         msg += "```"
@@ -127,7 +127,7 @@ async def checkCommands(message: discord.Message) -> None:
         leaderboard = cursor.fetchall()
         DB.close()
         rank = leaderboard.index((author,))
-        msg = "<@" + author + "> have **" + (str)(profile[0][1]) + "** xp and are Tier **" + (str)(profile[0][3]) + "**, making you **rank #" + (str)(rank) + "** out of " + (str)(len(leaderboard)) + " users on the leaderboard!"
+        msg = "<@" + author + "> have **" + (str)(profile[0][1]) + "** xp and are Tier **" + (str)(profile[0][3]) + "**, making you **rank #" + (str)(rank+1) + "** out of " + (str)(len(leaderboard)) + " users on the leaderboard!"
         await channel.send(msg)
 
     elif(base == "memberCheck"): #ex !memberCheck
