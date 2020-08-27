@@ -14,7 +14,7 @@ import random
 import time
 
 client = discord.Client()
-#messageCounter,canClaim,blacklist,claimMessage,claimEmoji
+#global messageCounter,canClaim,blacklist,claimMessage,claimEmoji
 messageCounter = 0
 canClaim = False
 claimEmoji = ""
@@ -32,6 +32,7 @@ def consoleLog(text: str) -> None:
         outfile.write("\n")
 
 async def checkCommands(message: discord.Message) -> None:
+    global messageCounter,canClaim,blacklist,claimMessage,claimEmoji
     command = message.content[1:].split(" ")
     base = command[0]
     consoleLog((str)(message.author.id) + " used " + base)
@@ -104,6 +105,7 @@ async def checkCommands(message: discord.Message) -> None:
                                (str)(result[2]) + "\n"
 
             msg += "```"
+            await channel.send(msg)
 
 
     elif (base == "help"):  # ex !leaderboard
@@ -236,6 +238,7 @@ def adminCheck(user: discord.User) -> bool:
     return user.guild_permissions.administrator
 
 async def randomClaimMessage(message: discord.Message) -> None:
+    global messageCounter
     messageCounter += 1
     rand = random.randrange(0,100)
     minMessages = 100
@@ -351,14 +354,15 @@ async def on_message(message: discord.Message) -> None:
 
 @client.event
 async def on_reaction_add(reaction, user):
+    global canClaim,claimMessage,claimEmoji
     if user == client.user: #bot message, so don't do anything
         return
     if(canClaim):
         message = reaction.message
         channel = message.channel
-        if(reaction == claimEmoji):
+        if(reaction == claimEmoji and message == claimMessage):
             canClaim = False
-            await client.send_message(channel, "cool.")
+            await channel.send("cool.")
     channel = reaction.message.channel
 
 @client.event
