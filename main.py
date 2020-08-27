@@ -76,6 +76,7 @@ async def checkCommands(message: discord.Message) -> None:
             DB.close()
 
             top5 = True
+            atop5 = False
             ellipsis = False
 
             msg += "Longhorn Gaming XP Leaderboard: ```"
@@ -85,10 +86,10 @@ async def checkCommands(message: discord.Message) -> None:
                     msg += (str)(counter) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
                            (str)(result[2]) + "\n"
                 if (author.id == (int)(result[0]) and top5):
-                    break
+                    atop5 = True
                 if(counter > 5):
                     top5 = False
-                if(not top5 and not ellipsis):
+                if(not atop5 and not top5 and not ellipsis):
                     msg += ". . . \n"
                     ellipsis = True
                 if(author.id == (int)(result[0]) and not top5):
