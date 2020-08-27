@@ -31,6 +31,7 @@ async def checkCommands(message: discord.Message) -> None:
     guild = message.guild
     roles = guild.roles
     members = guild.members
+    emojis = guild.emojis
     channel = message.channel
     author = message.author
     msg = ""
@@ -54,11 +55,16 @@ async def checkCommands(message: discord.Message) -> None:
         DB.close()
 
         msg += "Longhorn Gaming Xp Leaderboard: ```"
-        for result in results:
+        for counter, result in enumerate(results):
+            if(counter%10==0 and counter > 0): #every 10 names, send a new message
+                msg += "```"
+                await author.dm_channel.send(msg)
+                msg = "```"
             name = guild.get_member((int)(result[0])).display_name
             msg += name + ": " + (str)(result[1]) + " xp and tier " + (str)(result[2]) + "\n"
         msg += "```"
-        await author.dm_channel.send(msg)
+        if(len(msg) > 10): #if there's actually a name in this message, send it
+            await author.dm_channel.send(msg)
 
     elif (base == "help"):  # ex !leaderboard
         dms = author.dm_channel
@@ -97,9 +103,12 @@ async def checkCommands(message: discord.Message) -> None:
         DB = connectToDB() #this can be better, but for a later version
         cursor = DB.cursor()
         cursor.execute("SELECT * FROM users WHERE discordId = \"" + author + "\"")
-        result = cursor.fetchall()
+        profile = cursor.fetchall()
+        cursor.execute("SELECT discordId FROM users ORDER BY xp DESC")
+        leaderboard = cursor.fetchall()
         DB.close()
-        msg = "User " + "<@" + author + "> has **" + (str)(result[0][1]) + "** xp and is Tier **" + (str)(result[0][3]) + "**."
+        rank = leaderboard.index((author,))
+        msg = "<@" + author + "> have **" + (str)(profile[0][1]) + "** xp and are Tier **" + (str)(profile[0][3]) + "**, making you **rank #" + (str)(rank) + "** out of " + (str)(len(leaderboard)) + " users on the leaderboard!"
         await channel.send(msg)
 
     elif(base == "memberCheck"): #ex !memberCheck
@@ -108,12 +117,12 @@ async def checkCommands(message: discord.Message) -> None:
             for m in members:
                 name = m.display_name
                 joinDate = m.joined_at
-                monthYear = (str)(joinDate.month) + "-" + (str)(joinDate.year)
+                monthYear = (str)(joinDate.year) + "-" + (str)(joinDate.month)
                 if(monthYear not in joinDates):
                     joinDates[monthYear] = []
                 joinDates[monthYear].append(name)
-            # for d in joinDates:
-            #     print(d,len(joinDates[d]))
+            for d in sorted(joinDates):
+                print(d,len(joinDates[d]))
 
     elif(base == "blacklist"): #ex: !blacklist @channel
         if(adminCheck(message.author)):
@@ -132,6 +141,12 @@ async def checkCommands(message: discord.Message) -> None:
                 await channel.send(guild.get_channel(bChannel).mention + " has been removed from the blacklist.")
         else:
             await permissionDenied(message,channel)
+
+    elif(base == "claimDebug"):
+        usedEmojis = []
+        claimMessage = await channel.send("This is a test of the new claim system! React with something!")
+        rand = randomrange(0,len(emojis))
+        await claimMessage.add_reaction(emojis[0])
 
     elif(base == "claim"): #ex: !claim (only works when the bot signals you're able to)
         global canClaim, messageCounter
@@ -222,7 +237,10 @@ async def giveXp(message: discord.Message, amount: int, timePenalty: bool) -> in
             ts = then.strftime(timeFormat)
         else:
             elapsedMins = now.minute - then.minute
-            consoleLog("This user was last updated " + (str)(elapsedMins) + " minutes ago!")
+            if(elapsedMins < 0): #fix bug where if hour changes
+                elapsedMins = abs(elapsedMins)
+            #elapsedMins = ((now - then).totalSeconds())/60
+            consoleLog(userId + " was last updated " + (str)(elapsedMins) + " minutes ago!")
             if(elapsedMins < 1):
                 DB.close()
                 return xp
