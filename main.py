@@ -65,8 +65,8 @@ async def checkCommands(message: discord.Message) -> None:
             if(counter <= 5):
                 name = guild.get_member((int)(result[0])).display_name
                 if(author.id == (int)(result[0])):
-                    msg += "**" + (str)(counter) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
-                           (str)(result[2]) + "**\n"
+                    msg += (str)(counter) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
+                           (str)(result[2]) + "<----- YOU \n"
                 else:
                     msg += (str)(counter) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
                         (str)(result[2]) + "\n"
@@ -78,11 +78,11 @@ async def checkCommands(message: discord.Message) -> None:
             if(author.id == (int)(result[0]) and not top5):
                 for i in range(counter-3, counter+2):
                     result = results[i]
-                    if(counter != 4 or counter != 5):
+                    if(i != 4 or i != 5):
                         name = guild.get_member((int)(result[0])).display_name
                         if(author.id == (int)(result[0])):
-                            msg += "**" + (str)(counter) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
-                                   (str)(result[2]) + "**\n"
+                            msg += (str)(i+1) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
+                                   (str)(result[2]) + "<----- YOU \n"
                         else:
                             msg += (str)(i+1) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
                                 (str)(result[2]) + "\n"
