@@ -86,6 +86,7 @@ async def checkCommands(message: discord.Message) -> None:
                         else:
                             msg += (str)(i+1) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
                                 (str)(result[2]) + "\n"
+                break
 
         msg += "```"
         await channel.send(msg)
