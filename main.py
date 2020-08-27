@@ -51,64 +51,38 @@ async def checkCommands(message: discord.Message) -> None:
         await channel.send(msg)
 
     elif(base == "leaderboard"): #ex !leaderboard
-        dms = author.dm_channel
-        if(not dms): #if there is a dm channel that already exists
-            consoleLog("Created dm channel for " + (str)(author.id))
-            dms = await author.create_dm()
-
-        DB = connectToDB() #this can be better, but for a later version
+        DB = connectToDB()  # this can be better, but for a later version
         cursor = DB.cursor()
         cursor.execute("SELECT discordId, xp, tier FROM users ORDER BY xp DESC")
         results = cursor.fetchall()
         DB.close()
 
-        msg += "Longhorn Gaming Xp Leaderboard: ```"
-        for counter, result in enumerate(results):
-            if(counter%10==0 and counter > 0): #every 10 names, send a new message
-                msg += "```"
-                await author.dm_channel.send(msg)
-                msg = "```"
-            name = guild.get_member((int)(result[0])).display_name
-            msg += name + ": " + (str)(result[1]) + " xp and tier " + (str)(result[2]) + "\n"
-        msg += "```"
-        if(len(msg) > 10): #if there's actually a name in this message, send it
-            await author.dm_channel.send(msg)
+        top5 = True
+        atop5 = False
+        ellipsis = False
 
-
-    elif(base == "leaderboardDebug"):
-        if (adminCheck(message.author)):
-            DB = connectToDB()  # this can be better, but for a later version
-            cursor = DB.cursor()
-            cursor.execute("SELECT discordId, xp, tier FROM users ORDER BY xp DESC")
-            results = cursor.fetchall()
-            DB.close()
-
-            top5 = True
-            atop5 = False
-            ellipsis = False
-
-            msg += "Longhorn Gaming XP Leaderboard: ```"
-            for counter, result in enumerate(results, 1):
-                if(counter <= 5):
+        msg += "Longhorn Gaming XP Leaderboard: ```"
+        for counter, result in enumerate(results, 1):
+            if(counter <= 5):
+                name = guild.get_member((int)(result[0])).display_name
+                msg += (str)(counter) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
+                        (str)(result[2]) + "\n"
+            if (author.id == (int)(result[0]) and top5):
+                atop5 = True
+            if(counter > 5):
+                top5 = False
+            if(not atop5 and not top5 and not ellipsis):
+                msg += ". . . \n"
+                ellipsis = True
+            if(author.id == (int)(result[0]) and not top5):
+                for i in range(counter-3, counter+2):
+                    result = results[i]
                     name = guild.get_member((int)(result[0])).display_name
-                    msg += (str)(counter) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
-                           (str)(result[2]) + "\n"
-                if (author.id == (int)(result[0]) and top5):
-                    atop5 = True
-                if(counter > 5):
-                    top5 = False
-                if(not atop5 and not top5 and not ellipsis):
-                    msg += ". . . \n"
-                    ellipsis = True
-                if(author.id == (int)(result[0]) and not top5):
-                    for i in range(counter-3, counter+2):
-                        result = results[i]
-                        name = guild.get_member((int)(result[0])).display_name
-                        msg += (str)(i) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
-                               (str)(result[2]) + "\n"
+                    msg += (str)(i) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
+                            (str)(result[2]) + "\n"
 
-            msg += "```"
-            await channel.send(msg)
+        msg += "```"
+        await channel.send(msg)
 
 
     elif (base == "help"):  # ex !leaderboard
@@ -187,30 +161,13 @@ async def checkCommands(message: discord.Message) -> None:
             await permissionDenied(message,channel)
 
     elif(base == "claimDebug"):
-        usedEmojis = []
-        x = 0
-        while x < 3:
-            rand = random.randrange(0,len(emojis))
-            if(emojis[rand] not in usedEmojis):
-                usedEmojis.append(emojis[rand])
-                x += 1
-        rand = random.randrange(0,len(usedEmojis))
-        claimEmoji = usedEmojis[rand]
-        canClaim = True
-        claimMessage = await channel.send("Be the first to react with " + (str)(claimEmoji) + " to claim a small amount of xp!")
-        for emoji in usedEmojis:
-            await claimMessage.add_reaction(emoji)
+        await randomClaimMessage(message,True)
 
-    elif(base == "claim"): #ex: !claim (only works when the bot signals you're able to)
-        if(canClaim):
-            xpToClaim = (int)(15 * (random.randrange(50,200))/100)
-            xpToClaim = 5 * round(xpToClaim/5)  
-            await giveXp(message, xpToClaim, False)
-            canClaim = False
-            messageCounter = 0
-            await channel.send(message.author.mention + " claimed " + (str)(xpToClaim) + " xp!")
-        else:
-            await channel.send("Don't game the system, you can't claim xp until it pops up!")
+    # elif(base == "claim"): #ex: !claim (only works when the bot signals you're able to)
+    #     if(canClaim):
+            
+    #     else:
+    #         await channel.send("Don't game the system, you can't claim xp until it pops up!")
 
     elif(base == "giveXp"): #ex: !giveXp @insert_role_or_user_here 10
         if(adminCheck(message.author)): #if the user of this command is an admin
@@ -240,19 +197,32 @@ async def checkCommands(message: discord.Message) -> None:
 def adminCheck(user: discord.User) -> bool:
     return user.guild_permissions.administrator
 
-async def randomClaimMessage(message: discord.Message) -> None:
-    global messageCounter
+async def randomClaimMessage(message: discord.Message, debug: bool) -> None:
+    global messageCounter,canClaim,claimMessage,claimEmoji
+    emojis = message.guild.emojis
+    channel = message.channel
     messageCounter += 1
     rand = random.randrange(0,100)
     minMessages = 100
     val = (int)((messageCounter*100)/(minMessages*2)) #convert to a value between 0-100. 
     #50% chance per message at minMessages, 100% chance at minMessages*2
-    if(messageCounter < minMessages): #start !claiming at this number
+    if(messageCounter < minMessages and not debug): #start !claiming at this number
         return messageCounter
     else:
-        if(val > rand and not canClaim):
+        if((val > rand and not canClaim) or debug):
+            usedEmojis = []
+            x = 0
+            while x < 3:
+                rand = random.randrange(0,len(emojis))
+                if(emojis[rand] not in usedEmojis):
+                    usedEmojis.append(emojis[rand])
+                    x += 1
+            rand = random.randrange(0,len(usedEmojis))
+            claimEmoji = usedEmojis[rand]
             canClaim = True
-            await message.channel.send("type !claim to get a small amount of xp!")
+            claimMessage = await channel.send("Be the first to react with " + (str)(claimEmoji) + " to claim a small amount of xp!")
+            for emoji in usedEmojis:
+                await claimMessage.add_reaction(emoji)
 
 """
 userId (str)       : a string of the id of a user/member object
@@ -260,7 +230,9 @@ amount (int)       : the amount of xp to give to the user
 timePenalty (bool) : should this xp incur a time penalty on the next addition of xp? 
 """
 async def giveXp(message: discord.Message, amount: int, timePenalty: bool) -> int:
-    userId = (str)(message.author.id)
+    userId = (str)(message.id) #message can just be a user/author... kinda hacky fix
+    if hasattr(message, 'author'):
+        userId = (str)(message.author.id)
     DB = connectToDB() #this can be better, but for a later version
     cursor = DB.cursor()
     cursor.execute("SELECT * FROM users WHERE discordId = \"" + userId + "\"")
@@ -322,7 +294,9 @@ async def xpPerMessage(message: discord.Message) -> None:
 
 @client.event
 async def milestoneCheck(message: discord.Message, xp: int, otier: int) -> int:
-    author = message.author
+    author = message #message can just be a userId... kinda hacky fix
+    if hasattr(message, 'author'):
+        author = message.author
     #print("this is xp: " + str(xp)) #used for debugging
     ftier = 0 #final tier to return
     if (os.path.exists("config.txt")):
@@ -353,21 +327,24 @@ async def on_message(message: discord.Message) -> None:
         await checkCommands(message)
     else: #regular chat message
         await xpPerMessage(message)
-        await randomClaimMessage(message)
+        await randomClaimMessage(message,False)
 
 @client.event
 async def on_reaction_add(reaction, user):
-    global canClaim,claimMessage,claimEmoji
+    global messageCounter,canClaim,claimMessage,claimEmoji
     if user == client.user: #bot message, so don't do anything
         return
     if(canClaim):
-        print("inside")
         message = reaction.message
         channel = message.channel
         #print((reaction.emoji,claimEmoji,message.id,claimMessage.id))
         if(reaction.emoji == claimEmoji and message.id == claimMessage.id):
             canClaim = False
-            await channel.send("cool.")
+            xpToClaim = (int)(15 * (random.randrange(50,200))/100)
+            xpToClaim = 5 * round(xpToClaim/5)  
+            await channel.send(user.mention + " claimed " + (str)(xpToClaim) + " xp!")
+            await giveXp(user, xpToClaim, False)
+            messageCounter = 0
     channel = reaction.message.channel
 
 @client.event
@@ -377,7 +354,6 @@ async def on_ready() -> None:
     consoleLog(client.user.id)
     consoleLog('------')
     print("Launched.")
-
 
 def connectToDB() -> None:
     hst,dbname,u,pw = "","","",""
