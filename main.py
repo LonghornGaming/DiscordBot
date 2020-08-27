@@ -360,9 +360,11 @@ async def on_reaction_add(reaction, user):
     if user == client.user: #bot message, so don't do anything
         return
     if(canClaim):
+        print("inside")
         message = reaction.message
         channel = message.channel
-        if(reaction == claimEmoji and message == claimMessage):
+        #print((reaction.emoji,claimEmoji,message.id,claimMessage.id))
+        if(reaction.emoji == claimEmoji and message.id == claimMessage.id):
             canClaim = False
             await channel.send("cool.")
     channel = reaction.message.channel
