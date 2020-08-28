@@ -14,7 +14,6 @@ import random
 import time
 
 client = discord.Client()
-#global messageCounter,canClaim,blacklist,claimMessage,claimEmoji
 messageCounter = 0
 canClaim = False
 claimEmoji = ""
@@ -47,7 +46,7 @@ async def checkCommands(message: discord.Message) -> None:
     #enter switchcase for commands
 
     if(base == "d4"): #ex: !d4
-        msg = "CrusherCake is a Hardstuck D4 Urgot Onetrick"
+        msg = "CrusherCake is a Hardstuck D4 Urgot Onetrick."
         await channel.send(msg)
 
     elif(base == "leaderboard"): #ex !leaderboard
@@ -78,7 +77,7 @@ async def checkCommands(message: discord.Message) -> None:
             if(author.id == (int)(result[0]) and not top5):
                 for i in range(counter-3, counter+2):
                     result = results[i]
-                    if(i != 3 or i != 4):
+                    if(i > 4):
                         name = guild.get_member((int)(result[0])).display_name
                         if(author.id == (int)(result[0])):
                             msg += (str)(i+1) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
@@ -91,7 +90,6 @@ async def checkCommands(message: discord.Message) -> None:
         msg += "```"
         await channel.send(msg)
 
-
     elif (base == "help"):  # ex !leaderboard
         dms = author.dm_channel
         if (not dms):  # if there is a dm channel that already exists
@@ -99,10 +97,10 @@ async def checkCommands(message: discord.Message) -> None:
             dms = await author.create_dm()
 
         msg += "```Howdy! I'm a bot created for the Longhorn Gaming Discord. Below are my commands:\n"
-        msg += "!claim:       When the message comes up, type this for XP!\n"
         msg += "!help:        You're already here!\n"
         msg += "!leaderboard: Check to see where you rank on the leaderboard!\n"
         msg += "!profile:     Check your XP and Tier.```"
+        msg += "Plus there are some additional easter egg commands! See if you can find them all ^_^"
         await author.dm_channel.send(msg)
 
     elif(base == "messageCheck"): #ex !messageCheck
@@ -133,8 +131,11 @@ async def checkCommands(message: discord.Message) -> None:
         cursor.execute("SELECT discordId FROM users ORDER BY xp DESC")
         leaderboard = cursor.fetchall()
         DB.close()
-        rank = leaderboard.index((author,))
-        msg = "<@" + author + "> have **" + (str)(profile[0][1]) + "** xp and are Tier **" + (str)(profile[0][3]) + "**, making you **rank #" + (str)(rank+1) + "** out of " + (str)(len(leaderboard)) + " users on the leaderboard!"
+        if(len(profile) == 0):
+            msg = "<@" + author + ">, you have no xp! Don't worry, you can gain some just by sending messages! Try sending an intro in #say-hello to start!"
+        else:
+            rank = leaderboard.index((author,))
+            msg = "<@" + author + ">, you have **" + (str)(profile[0][1]) + "** xp and are Tier **" + (str)(profile[0][3]) + "**, making you **rank #" + (str)(rank+1) + "** out of " + (str)(len(leaderboard)) + " users on the leaderboard!"
         await channel.send(msg)
 
     elif(base == "memberCheck"): #ex !memberCheck
@@ -167,15 +168,6 @@ async def checkCommands(message: discord.Message) -> None:
         else:
             await permissionDenied(message,channel)
 
-    elif(base == "claimDebug"):
-        await randomClaimMessage(message,True)
-
-    # elif(base == "claim"): #ex: !claim (only works when the bot signals you're able to)
-    #     if(canClaim):
-            
-    #     else:
-    #         await channel.send("Don't game the system, you can't claim xp until it pops up!")
-
     elif(base == "giveXp"): #ex: !giveXp @insert_role_or_user_here 10
         if(adminCheck(message.author)): #if the user of this command is an admin
             wrappedId = command[1] #this is in the format <@&_____> or <@!_____> _____ is the id
@@ -199,7 +191,6 @@ async def checkCommands(message: discord.Message) -> None:
                 await message.channel.send("Invalid user/role id sent.")
         else:
             await permissionDenied(message,channel)
-
 
 def adminCheck(user: discord.User) -> bool:
     return user.guild_permissions.administrator
@@ -333,6 +324,7 @@ async def on_message(message: discord.Message) -> None:
     if message.content.startswith('!'): #command message
         await checkCommands(message)
     else: #regular chat message
+        if(message.channel.id == )
         await xpPerMessage(message)
         await randomClaimMessage(message,False)
 
