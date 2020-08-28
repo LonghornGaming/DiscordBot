@@ -66,7 +66,7 @@ async def checkCommands(message: discord.Message) -> None:
                 name = guild.get_member((int)(result[0])).display_name
                 if(author.id == (int)(result[0])):
                     msg += (str)(counter) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
-                           (str)(result[2]) + " <----- YOU \n"
+                           (str)(result[2]) + "          <----- YOU \n"
                 else:
                     msg += (str)(counter) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
                         (str)(result[2]) + "\n"
@@ -82,7 +82,7 @@ async def checkCommands(message: discord.Message) -> None:
                         name = guild.get_member((int)(result[0])).display_name
                         if(author.id == (int)(result[0])):
                             msg += (str)(i+1) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
-                                   (str)(result[2]) + " <----- YOU \n"
+                                   (str)(result[2]) + "          <----- YOU \n"
                         else:
                             msg += (str)(i+1) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
                                 (str)(result[2]) + "\n"
