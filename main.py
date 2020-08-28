@@ -66,23 +66,23 @@ async def checkCommands(message: discord.Message) -> None:
                 name = guild.get_member((int)(result[0])).display_name
                 if(author.id == (int)(result[0])):
                     msg += (str)(counter) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
-                           (str)(result[2]) + "<----- YOU \n"
+                           (str)(result[2]) + " <----- YOU \n"
                 else:
                     msg += (str)(counter) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
                         (str)(result[2]) + "\n"
             if(counter > 5):
                 top5 = False
-            if(counter > 8 and not ellipsis):
+            if(counter > 8 and not top5 and not ellipsis):
                 msg += ". . . \n"
                 ellipsis = True
             if(author.id == (int)(result[0]) and not top5):
                 for i in range(counter-3, counter+2):
                     result = results[i]
-                    if(i != 4 or i != 5):
+                    if(i != 3 or i != 4):
                         name = guild.get_member((int)(result[0])).display_name
                         if(author.id == (int)(result[0])):
                             msg += (str)(i+1) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
-                                   (str)(result[2]) + "<----- YOU \n"
+                                   (str)(result[2]) + " <----- YOU \n"
                         else:
                             msg += (str)(i+1) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
                                 (str)(result[2]) + "\n"
