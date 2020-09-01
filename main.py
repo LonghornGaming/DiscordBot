@@ -18,8 +18,12 @@ messageCounter = 0
 canClaim = False
 claimEmoji = ""
 claimMessage = ""
+blacklist = []
+roles = {"messageId":}
 with open("blacklist.txt",'r') as openFile:
     blacklist = json.loads(openFile.read())
+with open("roles.txt",'r') as openFile:
+    roleMessages = json.loads(openFile.read())
 
 def consoleLog(text: str) -> None:
     with open("log.txt","a") as outfile:
@@ -49,6 +53,19 @@ async def checkCommands(message: discord.Message) -> None:
         msg = "CrusherCake is a Hardstuck D4 Urgot Onetrick."
         await channel.send(msg)
 
+    elif(base == "addRole"): #ex: !setRoleMessage emoji role rType
+        if(adminCheck(message.author)):
+            emoji = command[1]
+            role = command[2]
+            rType = command[3]
+            if(role not in roles):
+                roles[role] = {"emoji":emoji,"rType":rType}
+            with open("roles.txt",'w') as openFile:
+                openFile.write(json.dumps(roles))
+            for role in roles:
+                msg += roles[role] + " " + roles + ": **" + (str)(len(guild.roles.members)) + "**"
+            await channel.send
+
     elif(base == "leaderboard"): #ex !leaderboard
         DB = connectToDB()  # this can be better, but for a later version
         cursor = DB.cursor()
@@ -68,6 +85,7 @@ async def checkCommands(message: discord.Message) -> None:
                     msg += (str)(counter) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
                            (str)(result[2]) + "          <----- YOU \n"
                     atop5 = True
+                    print("here",atop5)
                 else:
                     msg += (str)(counter) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
                         (str)(result[2]) + "\n"
@@ -159,14 +177,12 @@ async def checkCommands(message: discord.Message) -> None:
             bChannel = (int)(wrappedId[2:len(wrappedId)-1])
             if(bChannel not in blacklist): #add it to the blacklist
                 blacklist.append((int)(bChannel))
-                with open("blacklist.txt",'w') as openFile:
-                    openFile.write(json.dumps(blacklist))
                 await channel.send(guild.get_channel(bChannel).mention + " has been added to the blacklist.")
             else: #remove it from the blacklist
                 blacklist.remove((int)(bChannel))
-                with open("blacklist.txt",'w') as openFile:
-                    openFile.write(json.dumps(blacklist))
                 await channel.send(guild.get_channel(bChannel).mention + " has been removed from the blacklist.")
+            with open("blacklist.txt",'w') as openFile:
+                openFile.write(json.dumps(blacklist))
         else:
             await permissionDenied(message,channel)
 
@@ -210,6 +226,7 @@ async def randomClaimMessage(message: discord.Message, debug: bool) -> None:
         return messageCounter
     else:
         if((val > rand and not canClaim) or debug):
+            canClaim = True
             usedEmojis = []
             x = 0
             while x < 3:
@@ -219,7 +236,6 @@ async def randomClaimMessage(message: discord.Message, debug: bool) -> None:
                     x += 1
             rand = random.randrange(0,len(usedEmojis))
             claimEmoji = usedEmojis[rand]
-            canClaim = True
             claimMessage = await channel.send("Be the first to react with " + (str)(claimEmoji) + " to claim a small amount of xp!")
             for emoji in usedEmojis:
                 await claimMessage.add_reaction(emoji)
@@ -292,6 +308,19 @@ async def xpPerMessage(message: discord.Message) -> None:
                 #break
     xp = (int)(await giveXp(message, xpPerMessage, True))
 
+async def handleIntro(message: discord.Message) -> None:
+    userId = (str)(message.author.id)
+    DB = connectToDB() #this can be better, but for a later version
+    cursor = DB.cursor()
+    cursor.execute("SELECT intro FROM users WHERE discordId = \"" + userId + "\"")
+    intro = cursor.fetchall()
+    intro = intro[0][0]
+    if(not intro):
+        cursor.execute("UPDATE users SET intro = 1 WHERE discordId = \"" + (str)(userId) + "\"")
+        DB.commit()
+        await giveXp(message,50,False) #first time gives 50 xp
+    DB.close()
+    
 @client.event
 async def milestoneCheck(message: discord.Message, xp: int, otier: int) -> int:
     author = message #message can just be a userId... kinda hacky fix
@@ -326,7 +355,9 @@ async def on_message(message: discord.Message) -> None:
     if message.content.startswith('!'): #command message
         await checkCommands(message)
     else: #regular chat message
-        if(message.channel.id == )
+        if(message.channel.id == 355749312434798593): #if the message was sent in #say-hello
+            print("found intro message")
+            await handleIntro(message)
         await xpPerMessage(message)
         await randomClaimMessage(message,False)
 
