@@ -19,11 +19,11 @@ canClaim = False
 claimEmoji = ""
 claimMessage = ""
 blacklist = []
-roles = {"messageId":}
+#roles = {"messageId":}
 with open("blacklist.txt",'r') as openFile:
     blacklist = json.loads(openFile.read())
-with open("roles.txt",'r') as openFile:
-    roleMessages = json.loads(openFile.read())
+#with open("roles.txt",'r') as openFile:
+    #roleMessages = json.loads(openFile.read())
 
 def consoleLog(text: str) -> None:
     with open("log.txt","a") as outfile:
@@ -265,15 +265,21 @@ async def giveXp(message: discord.Message, amount: int, timePenalty: bool) -> in
         if(not timePenalty):
             ts = ts #hacky way to make sure there's no time penalty after this one
         formatStr = """
-            INSERT INTO users (`discordId`, `xp`, `lastUpdated`,`tier`)
-            VALUES ("{dId}",{exp},"{time}",{t});
+            INSERT INTO users (`discordId`, `xp`, `lastUpdated`,`tier`,`xpForHour`,`xpForDay`)
+            VALUES ("{dId}",{exp},"{time}",{t},{hourxp},{dayxp});
             """
-        cursor.execute(formatStr.format(dId=userId,exp=xp,time=ts,t=0))
+        cursor.execute(formatStr.format(dId=userId,exp=xp,time=ts,t=0,hourxp=xp,dayxp=xp))
     else: #if this is a returning user
+        xpPerHour = result[0][5] + xp
+        xpPerDay = result[0][6] + xp
         xp += result[0][1]
         then = result[0][2]
         tier = result[0][3]
-        if(not timePenalty):
+        if(now.hour is not then.hour):
+            xpPerHour = 0
+        if(now.day is not then.day):
+            xpPerDay = 0
+        if(not timePenalty): #xpPerHour/Day will introduce bugs here when giving xp
             ts = then.strftime(timeFormat)
         else:
             elapsedMins = now.minute - then.minute
@@ -281,12 +287,19 @@ async def giveXp(message: discord.Message, amount: int, timePenalty: bool) -> in
                 elapsedMins = abs(elapsedMins)
             #elapsedMins = ((now - then).totalSeconds())/60
             consoleLog(userId + " was last updated " + (str)(elapsedMins) + " minutes ago!")
+            if(xpPerHour > 100):
+                DB.close()
+                return xp
+            if(xpPerDay > 300):
+                DB.close()
+                return xp
             if(elapsedMins < 1):
                 DB.close()
                 return xp
         tier = await milestoneCheck(message, (int)(xp), tier)
         cursor.execute("UPDATE users SET xp = " + (str)(xp) + ", lastUpdated = \"" + ts + "\", tier = " + str(tier) +
-                       " WHERE discordId = \"" + (str)(userId) + "\"")
+                       ", xpForHour = " + (str)(xpPerHour) + ", xpForDay = " + (str)(xpPerDay) + " WHERE discordId = \"" 
+                       + (str)(userId) + "\"")
     DB.commit()
     DB.close()
     return xp
