@@ -14,13 +14,16 @@ import random
 import time
 
 client = discord.Client()
-#global messageCounter,canClaim,blacklist,claimMessage,claimEmoji
 messageCounter = 0
 canClaim = False
 claimEmoji = ""
 claimMessage = ""
+blacklist = []
+roles = {"messageId":}
 with open("blacklist.txt",'r') as openFile:
     blacklist = json.loads(openFile.read())
+with open("roles.txt",'r') as openFile:
+    roleMessages = json.loads(openFile.read())
 
 def consoleLog(text: str) -> None:
     with open("log.txt","a") as outfile:
@@ -47,8 +50,21 @@ async def checkCommands(message: discord.Message) -> None:
     #enter switchcase for commands
 
     if(base == "d4"): #ex: !d4
-        msg = "CrusherCake is a Hardstuck D4 Urgot Onetrick"
+        msg = "CrusherCake is a Hardstuck D4 Urgot Onetrick."
         await channel.send(msg)
+
+    elif(base == "addRole"): #ex: !setRoleMessage emoji role rType
+        if(adminCheck(message.author)):
+            emoji = command[1]
+            role = command[2]
+            rType = command[3]
+            if(role not in roles):
+                roles[role] = {"emoji":emoji,"rType":rType}
+            with open("roles.txt",'w') as openFile:
+                openFile.write(json.dumps(roles))
+            for role in roles:
+                msg += roles[role] + " " + roles + ": **" + (str)(len(guild.roles.members)) + "**"
+            await channel.send
 
     elif(base == "leaderboard"): #ex !leaderboard
         DB = connectToDB()  # this can be better, but for a later version
@@ -69,6 +85,7 @@ async def checkCommands(message: discord.Message) -> None:
                     msg += (str)(counter) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
                            (str)(result[2]) + "          <----- YOU \n"
                     atop5 = True
+                    print("here",atop5)
                 else:
                     msg += (str)(counter) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
                         (str)(result[2]) + "\n"
@@ -80,7 +97,7 @@ async def checkCommands(message: discord.Message) -> None:
             if(author.id == (int)(result[0]) and not top5):
                 for i in range(counter-3, counter+2):
                     result = results[i]
-                    if(i != 3 or i != 4):
+                    if(i > 4):
                         name = guild.get_member((int)(result[0])).display_name
                         if(author.id == (int)(result[0])):
                             msg += (str)(i+1) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
@@ -93,7 +110,6 @@ async def checkCommands(message: discord.Message) -> None:
         msg += "```"
         await channel.send(msg)
 
-
     elif (base == "help"):  # ex !leaderboard
         dms = author.dm_channel
         if (not dms):  # if there is a dm channel that already exists
@@ -101,10 +117,10 @@ async def checkCommands(message: discord.Message) -> None:
             dms = await author.create_dm()
 
         msg += "```Howdy! I'm a bot created for the Longhorn Gaming Discord. Below are my commands:\n"
-        msg += "!claim:       When the message comes up, type this for XP!\n"
         msg += "!help:        You're already here!\n"
         msg += "!leaderboard: Check to see where you rank on the leaderboard!\n"
         msg += "!profile:     Check your XP and Tier.```"
+        msg += "Plus there are some additional easter egg commands! See if you can find them all ^_^"
         await author.dm_channel.send(msg)
 
     elif(base == "messageCheck"): #ex !messageCheck
@@ -135,8 +151,11 @@ async def checkCommands(message: discord.Message) -> None:
         cursor.execute("SELECT discordId FROM users ORDER BY xp DESC")
         leaderboard = cursor.fetchall()
         DB.close()
-        rank = leaderboard.index((author,))
-        msg = "<@" + author + "> have **" + (str)(profile[0][1]) + "** xp and are Tier **" + (str)(profile[0][3]) + "**, making you **rank #" + (str)(rank+1) + "** out of " + (str)(len(leaderboard)) + " users on the leaderboard!"
+        if(len(profile) == 0):
+            msg = "<@" + author + ">, you have no xp! Don't worry, you can gain some just by sending messages! Try sending an intro in #say-hello to start!"
+        else:
+            rank = leaderboard.index((author,))
+            msg = "<@" + author + ">, you have **" + (str)(profile[0][1]) + "** xp and are Tier **" + (str)(profile[0][3]) + "**, making you **rank #" + (str)(rank+1) + "** out of " + (str)(len(leaderboard)) + " users on the leaderboard!"
         await channel.send(msg)
 
     elif(base == "memberCheck"): #ex !memberCheck
@@ -158,25 +177,14 @@ async def checkCommands(message: discord.Message) -> None:
             bChannel = (int)(wrappedId[2:len(wrappedId)-1])
             if(bChannel not in blacklist): #add it to the blacklist
                 blacklist.append((int)(bChannel))
-                with open("blacklist.txt",'w') as openFile:
-                    openFile.write(json.dumps(blacklist))
                 await channel.send(guild.get_channel(bChannel).mention + " has been added to the blacklist.")
             else: #remove it from the blacklist
                 blacklist.remove((int)(bChannel))
-                with open("blacklist.txt",'w') as openFile:
-                    openFile.write(json.dumps(blacklist))
                 await channel.send(guild.get_channel(bChannel).mention + " has been removed from the blacklist.")
+            with open("blacklist.txt",'w') as openFile:
+                openFile.write(json.dumps(blacklist))
         else:
             await permissionDenied(message,channel)
-
-    elif(base == "claimDebug"):
-        await randomClaimMessage(message,True)
-
-    # elif(base == "claim"): #ex: !claim (only works when the bot signals you're able to)
-    #     if(canClaim):
-            
-    #     else:
-    #         await channel.send("Don't game the system, you can't claim xp until it pops up!")
 
     elif(base == "giveXp"): #ex: !giveXp @insert_role_or_user_here 10
         if(adminCheck(message.author)): #if the user of this command is an admin
@@ -202,7 +210,6 @@ async def checkCommands(message: discord.Message) -> None:
         else:
             await permissionDenied(message,channel)
 
-
 def adminCheck(user: discord.User) -> bool:
     return user.guild_permissions.administrator
 
@@ -219,6 +226,7 @@ async def randomClaimMessage(message: discord.Message, debug: bool) -> None:
         return messageCounter
     else:
         if((val > rand and not canClaim) or debug):
+            canClaim = True
             usedEmojis = []
             x = 0
             while x < 3:
@@ -228,7 +236,6 @@ async def randomClaimMessage(message: discord.Message, debug: bool) -> None:
                     x += 1
             rand = random.randrange(0,len(usedEmojis))
             claimEmoji = usedEmojis[rand]
-            canClaim = True
             claimMessage = await channel.send("Be the first to react with " + (str)(claimEmoji) + " to claim a small amount of xp!")
             for emoji in usedEmojis:
                 await claimMessage.add_reaction(emoji)
@@ -301,6 +308,19 @@ async def xpPerMessage(message: discord.Message) -> None:
                 #break
     xp = (int)(await giveXp(message, xpPerMessage, True))
 
+async def handleIntro(message: discord.Message) -> None:
+    userId = (str)(message.author.id)
+    DB = connectToDB() #this can be better, but for a later version
+    cursor = DB.cursor()
+    cursor.execute("SELECT intro FROM users WHERE discordId = \"" + userId + "\"")
+    intro = cursor.fetchall()
+    intro = intro[0][0]
+    if(not intro):
+        cursor.execute("UPDATE users SET intro = 1 WHERE discordId = \"" + (str)(userId) + "\"")
+        DB.commit()
+        await giveXp(message,50,False) #first time gives 50 xp
+    DB.close()
+    
 @client.event
 async def milestoneCheck(message: discord.Message, xp: int, otier: int) -> int:
     author = message #message can just be a userId... kinda hacky fix
@@ -335,6 +355,9 @@ async def on_message(message: discord.Message) -> None:
     if message.content.startswith('!'): #command message
         await checkCommands(message)
     else: #regular chat message
+        if(message.channel.id == 355749312434798593): #if the message was sent in #say-hello
+            print("found intro message")
+            await handleIntro(message)
         await xpPerMessage(message)
         await randomClaimMessage(message,False)
 
