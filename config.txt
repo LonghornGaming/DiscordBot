@@ -1,6 +1,6 @@
 {"tiers":[{"number":"0","xp":"0","reward":"None"},
 {"number":"1","xp":"500","reward":"TBD"},
-{"number":"2","xp":"2500","reward":"TBD"},
+{"number":"2","xp":"2000","reward":"TBD"},
 {"number":"3","xp":"5000","reward":"TBD"},
 {"number":"4","xp":"10000","reward":"TBD"},
 {"number":"5","xp":"20000","reward":"TBD"}]}
