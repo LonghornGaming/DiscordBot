@@ -287,10 +287,10 @@ async def giveXp(message: discord.Message, amount: int, timePenalty: bool) -> in
                 elapsedMins = abs(elapsedMins)
             #elapsedMins = ((now - then).totalSeconds())/60
             consoleLog(userId + " was last updated " + (str)(elapsedMins) + " minutes ago!")
-            if(xpPerHour > 100):
+            if(xpPerHour >= 100):
                 DB.close()
                 return xp
-            if(xpPerDay > 300):
+            if(xpPerDay >= 300):
                 DB.close()
                 return xp
             if(elapsedMins < 1):
@@ -313,12 +313,6 @@ async def xpPerMessage(message: discord.Message) -> None:
     roles = guild.roles
     author = (str)(message.author.id)
 
-    #if adminCheck(message.author):
-        #memberroles = message.author.roles
-        #for role in memberroles:
-            #if role in roles:
-                #xpPerMessage = xpPerMessage * 1.2
-                #break
     xp = (int)(await giveXp(message, xpPerMessage, True))
 
 async def handleIntro(message: discord.Message) -> None:
