@@ -119,8 +119,35 @@ async def checkCommands(message: discord.Message) -> None:
         msg += "```Howdy! I'm a bot created for the Longhorn Gaming Discord. Below are my commands:\n"
         msg += "!help:        You're already here!\n"
         msg += "!leaderboard: Check to see where you rank on the leaderboard!\n"
-        msg += "!profile:     Check your XP and Tier.```"
+        msg += "!profile:     Check your XP and Tier.\n"
+        msg += "!tiers:       A brief explanation of tiers and rewards.```"
         msg += "Plus there are some additional easter egg commands! See if you can find them all ^_^"
+        await author.dm_channel.send(msg)
+
+    elif (base == "tiers"):  # ex !leaderboard
+        dms = author.dm_channel
+        if (not dms):
+            dms = await author.create_dm()
+
+        msg += "```Bevo Bot's XP Tiers are as follows:\n" \
+               "- Tier 1: Bronze, 500 XP\n    " \
+               "    - LG member t-shirt\n" \
+               "    - LG sticker\n" \
+               "- Tier 2: Silver, 2000 XP\n" \
+               "    - LG (large) sticker\n" \
+               "- Tier 3: Gold, 5000 XP\n" \
+               "    - Early access to a future LG project\n" \
+               "- Tier 4: Platinum, 10000 XP\n" \
+               "    - LG Holo sticker\n" \
+               "    - 1 month Nitro Classic (tentative)\n" \
+               "- Tier 5: Diamond, 20000 XP\n" \
+               "    - The first 5 members to reach this tier will receive (almost) ANY HyperX peripheral" \
+               " of their choice.\n\n" \
+               "- All XP tiers come with Discord roles and access to exclusive giveaways.\n" \
+               "- All in-kind prizes are for LG members only.\n" \
+               "- Prizes are tentative and subject to change. If we add a prize but you’ve already surpassed" \
+               " that rank, you’ll still receive it retroactively.```"
+
         await author.dm_channel.send(msg)
 
     elif(base == "messageCheck"): #ex !messageCheck
@@ -331,6 +358,12 @@ async def handleIntro(message: discord.Message) -> None:
 @client.event
 async def milestoneCheck(message: discord.Message, xp: int, otier: int) -> int:
     author = message #message can just be a userId... kinda hacky fix
+    guild = message.guild
+    user = guild.get_member(message.author.id)
+    lgmember = guild.get_role(736351923468238891) #until i learn how to grab roles in an easier manner
+    tierroles = {1: 754533153258864741, 2: 754535125752086640, 3: 754535269335564291,
+                 4: 754537923659169842, 5: 754538022569115690}
+
     if hasattr(message, 'author'):
         author = message.author
     #print("this is xp: " + str(xp)) #used for debugging
@@ -349,6 +382,10 @@ async def milestoneCheck(message: discord.Message, xp: int, otier: int) -> int:
         if (not dms):  # if there is a dm channel that already exists
             consoleLog("Created dm channel for " + (str)(author.id))
             dms = await author.create_dm()
+        if lgmember in user.roles:
+            roleid = tierroles.get(ftier, 0)
+            role = guild.get_role(roleid)
+            await user.add_roles(role)
         await author.dm_channel.send("Congrats! You've reached Tier **" + (str)(ftier) + "**!")
     return ftier
 
@@ -361,6 +398,9 @@ async def on_message(message: discord.Message) -> None:
         return
     if message.content.startswith('!'): #command message
         await checkCommands(message)
+    if "<@!" + str(client.user.id) + ">" in message.content:
+        if (adminCheck(message.author)):
+            await message.channel.send("howdy pardner <@!" + str(message.author.id) + ">")
     else: #regular chat message
         if(message.channel.id == 355749312434798593): #if the message was sent in #say-hello
             print("found intro message")
