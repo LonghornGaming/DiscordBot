@@ -65,49 +65,49 @@ async def checkCommands(message: discord.Message) -> None:
                 msg += roles[role] + " " + roles + ": **" + (str)(len(guild.roles.members)) + "**"
             await channel.send
 
-    elif(base == "leaderboard"): #ex !leaderboard
-        DB = connectToDB()  # this can be better, but for a later version
-        cursor = DB.cursor()
-        cursor.execute("SELECT discordId, xp, tier FROM users ORDER BY xp DESC")
-        results = cursor.fetchall()
-        DB.close()
-
-        top5 = True
-        atop5 = False
-        ellipsis = False
-
-        msg += "Longhorn Gaming XP Leaderboard: ```"
-        for counter, result in enumerate(results, 1):
-            if(counter <= 5):
-                name = guild.get_member((int)(result[0])).display_name
-                if(author.id == (int)(result[0])):
-                    msg += (str)(counter) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
-                           (str)(result[2]) + "          <----- YOU \n"
-                    atop5 = True
-                    print("here",atop5)
-                else:
-                    msg += (str)(counter) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
-                        (str)(result[2]) + "\n"
-            if(counter > 5):
-                top5 = False
-            if(counter > 8 and not atop5 and not top5 and not ellipsis):
-                msg += ". . . \n"
-                ellipsis = True
-            if(author.id == (int)(result[0]) and not top5):
-                for i in range(counter-3, counter+2):
-                    result = results[i]
-                    if(i > 4):
-                        name = guild.get_member((int)(result[0])).display_name
-                        if(author.id == (int)(result[0])):
-                            msg += (str)(i+1) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
-                                   (str)(result[2]) + "          <----- YOU \n"
-                        else:
-                            msg += (str)(i+1) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
-                                (str)(result[2]) + "\n"
-                break
-
-        msg += "```"
-        await channel.send(msg)
+    # elif(base == "leaderboard"): #ex !leaderboard
+    #     DB = connectToDB()  # this can be better, but for a later version
+    #     cursor = DB.cursor()
+    #     cursor.execute("SELECT discordId, xp, tier FROM users ORDER BY xp DESC")
+    #     results = cursor.fetchall()
+    #     DB.close()
+    #
+    #     top5 = True
+    #     atop5 = False
+    #     ellipsis = False
+    #
+    #     msg += "Longhorn Gaming XP Leaderboard: ```"
+    #     for counter, result in enumerate(results, 1):
+    #         if(counter <= 5):
+    #             name = guild.get_member((int)(result[0])).display_name
+    #             if(author.id == (int)(result[0])):
+    #                 msg += (str)(counter) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
+    #                        (str)(result[2]) + "          <----- YOU \n"
+    #                 atop5 = True
+    #                 print("here",atop5)
+    #             else:
+    #                 msg += (str)(counter) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
+    #                     (str)(result[2]) + "\n"
+    #         if(counter > 5):
+    #             top5 = False
+    #         if(counter > 8 and not atop5 and not top5 and not ellipsis):
+    #             msg += ". . . \n"
+    #             ellipsis = True
+    #         if(author.id == (int)(result[0]) and not top5):
+    #             for i in range(counter-3, counter+2):
+    #                 result = results[i]
+    #                 if(i > 4):
+    #                     name = guild.get_member((int)(result[0])).display_name
+    #                     if(author.id == (int)(result[0])):
+    #                         msg += (str)(i+1) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
+    #                                (str)(result[2]) + "          <----- YOU \n"
+    #                     else:
+    #                         msg += (str)(i+1) + ": " + name + " - " + (str)(result[1]) + " xp and tier " + \
+    #                             (str)(result[2]) + "\n"
+    #             break
+    #
+    #     msg += "```"
+    #     await channel.send(msg)
 
     elif (base == "help"):  # ex !leaderboard
         dms = author.dm_channel
@@ -117,7 +117,6 @@ async def checkCommands(message: discord.Message) -> None:
 
         msg += "```Howdy! I'm a bot created for the Longhorn Gaming Discord. Below are my commands:\n"
         msg += "!help:        You're already here!\n"
-        msg += "!leaderboard: Check to see where you rank on the leaderboard!\n"
         msg += "!profile:     Check your XP and Tier.\n"
         msg += "!tiers:       A brief explanation of tiers and rewards.```"
         msg += "Plus there are some additional easter egg commands! See if you can find them all ^_^"
@@ -131,18 +130,19 @@ async def checkCommands(message: discord.Message) -> None:
         msg += "```Bevo Bot's XP Tiers are as follows:\n" \
                "- Tier 1: Bronze, 500 XP\n" \
                "    - LG member t-shirt\n" \
-               "    - LG sticker\n" \
                "- Tier 2: Silver, 2000 XP\n" \
-               "    - LG (large) sticker\n" \
+               "    - LG (small) sticker\n" \
+               "    - Access to exclusive giveaways\n" \
                "- Tier 3: Gold, 5000 XP\n" \
                "    - Early access to a future LG project\n" \
+               "    - LG (large) sticker\n" \
                "- Tier 4: Platinum, 10000 XP\n" \
-               "    - LG Holo sticker\n" \
-               "    - 1 month Nitro Classic (tentative)\n" \
+               "    - LG Holographic sticker\n" \
+               "    - 1 month Nitro Classic subscription\n" \
                "- Tier 5: Diamond, 20000 XP\n" \
                "    - The first 5 members to reach this tier will receive (almost) ANY HyperX peripheral" \
                " of their choice.\n\n" \
-               "- All XP tiers come with Discord roles and access to exclusive giveaways.\n" \
+               "- All XP tiers come with their own respective Discord roles.\n" \
                "- All in-kind prizes are for LG members only.\n" \
                "- Prizes are tentative and subject to change. If we add a prize but you’ve already surpassed" \
                " that rank, you’ll still receive it retroactively.```"
@@ -169,6 +169,8 @@ async def checkCommands(message: discord.Message) -> None:
 
     elif(base == "profile"):
         author = (str)(message.author.id)
+        tiernames = {1: "**Bronze**", 2: "**Silver**", 3: "**Gold**",
+                     4: "**Platinum**", 5: "**Diamond**"}
 
         DB = connectToDB() #this can be better, but for a later version
         cursor = DB.cursor()
@@ -178,10 +180,13 @@ async def checkCommands(message: discord.Message) -> None:
         leaderboard = cursor.fetchall()
         DB.close()
         if(len(profile) == 0):
-            msg = "<@" + author + ">, you have no xp! Don't worry, you can gain some just by sending messages! Try sending an intro in #say-hello to start!"
+            msg = "<@" + author + ">, you have no xp! Don't worry, you can gain some just by sending messages!" \
+                                  " Try sending an intro in #say-hello to start!"
         else:
             rank = leaderboard.index((author,))
-            msg = "<@" + author + ">, you have **" + (str)(profile[0][1]) + "** xp and are Tier **" + (str)(profile[0][3]) + "**, making you **rank #" + (str)(rank+1) + "** out of " + (str)(len(leaderboard)) + " users on the leaderboard!"
+            name = tiernames.get(profile[0][3], 0)
+            msg = "<@" + author + ">, you have **" + (str)(profile[0][1]) + "** xp and are " + (str)(name) + " Tier."
+            #" making you **rank #" + (str)(rank+1) + "** out of " + (str)(len(leaderboard)) + " users on the leaderboard!"
         await channel.send(msg)
 
     elif(base == "memberCheck"): #ex !memberCheck
@@ -212,6 +217,7 @@ async def checkCommands(message: discord.Message) -> None:
         else:
             await permissionDenied(message,channel)
 
+    # large WIP
     elif(base == "giveXp"): #ex: !giveXp @insert_role_or_user_here 10
         if(adminCheck(message.author)): #if the user of this command is an admin
             wrappedId = command[1] #this is in the format <@&_____> or <@!_____> _____ is the id
@@ -313,10 +319,10 @@ async def giveXp(message: discord.Message, amount: int, timePenalty: bool) -> in
                 elapsedMins = abs(elapsedMins)
             #elapsedMins = ((now - then).totalSeconds())/60
             consoleLog(userId + " was last updated " + (str)(elapsedMins) + " minutes ago!")
-            if(xpPerHour >= 100):
+            if(xpPerHour >= 50):
                 DB.close()
                 return xp
-            if(xpPerDay >= 300):
+            if(xpPerDay >= 50):
                 DB.close()
                 return xp
             if(elapsedMins < 1):
@@ -361,6 +367,33 @@ async def milestoneCheck(message: discord.Message, xp: int, otier: int) -> int:
     lgmember = guild.get_role(736351923468238891) #until i learn how to grab roles in an easier manner
     tierroles = {1: 754533153258864741, 2: 754535125752086640, 3: 754535269335564291,
                  4: 754537923659169842, 5: 754538022569115690}
+    dmemsg = {1: "Congratulations! You've hit the **Bronze** tier, which gives you the following rewards:\n"
+               "```- LG Membership Shirt (multiple delivery options available)\n"
+               "- Exclusive Discord role (@Bevo Bot Bronze)```"
+               " In order to claim your rewards, please visit the following link to provide"
+               " us with the necessary information: <https://forms.gle/Vb2kBD4DZnrr7UNTA>",
+              2: "Congratulations! You've hit the **Silver** tier, which gives you the following rewards:\n"
+               "```- A small LG sticker\n"
+               "- Access to exclusive giveaways\n"
+               "- Exclusive Discord role (@Bevo Bot Silver)```",
+              3: "Congratulations! You've hit the **Gold** tier, which gives you the following rewards:\n"
+               "```- A large LG sticker (limited quantity!)\n"
+               "- Early access to a future LG project\n"
+               "- Exclusive Discord role (@Bevo Bot Gold)```",
+              4: "Congratulations! You've hit the **Platinum** tier, which gives you the following rewards:\n"
+               "```- 1 month of Nitro Classic on us\n"
+               "- A large holographic LG sticker (limited quantity!)\n"
+               "- Exclusive Discord role (@Bevo Bot Platinum)```",
+              5: "Congratulations! You've hit the **Diamond** tier, which gives you the following rewards:\n"
+               "```- A HyperX peripheral of your choice (limited to first 5 members)\n"
+               "- Exclusive Discord role (@Bevo Bot Diamond)```"
+              }
+    dmsg = {1: "Congratulations! You've hit the **Bronze** tier.",
+            2: "Congratulations! You've hit the **Silver** tier.",
+            3: "Congratulations! You've hit the **Gold** tier.",
+            4: "Congratulations! You've hit the **Platinum** tier.",
+            5: "Congratulations! You've hit the **Diamond** tier."
+            }
 
     if hasattr(message, 'author'):
         author = message.author
@@ -383,9 +416,13 @@ async def milestoneCheck(message: discord.Message, xp: int, otier: int) -> int:
             dms = await author.create_dm()
         if lgmember in user.roles:
             roleid = tierroles.get(ftier, 0)
+            msg = dmemsg.get(ftier, 0)
             role = guild.get_role(roleid)
             await user.add_roles(role)
-        await author.dm_channel.send("Congrats! You've reached Tier **" + (str)(ftier) + "**!")
+            await author.dm_channel.send(msg)
+        else:
+            msg = dmsg.get(ftier, 0)
+            await author.dm_channel.send(dmsg)
     return ftier
 
 @client.event
