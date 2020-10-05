@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Thu Jul  9 15:26:45 2020
-
 @author: ahirc
 """
 import discord
@@ -130,7 +129,7 @@ async def checkCommands(message: discord.Message) -> None:
             dms = await author.create_dm()
 
         msg += "```Bevo Bot's XP Tiers are as follows:\n" \
-               "- Tier 1: Bronze, 500 XP\n    " \
+               "- Tier 1: Bronze, 500 XP\n" \
                "    - LG member t-shirt\n" \
                "    - LG sticker\n" \
                "- Tier 2: Silver, 2000 XP\n" \
@@ -359,13 +358,13 @@ async def handleIntro(message: discord.Message) -> None:
 async def milestoneCheck(message: discord.Message, xp: int, otier: int) -> int:
     author = message #message can just be a userId... kinda hacky fix
     guild = message.guild
-    user = guild.get_member(message.author.id)
     lgmember = guild.get_role(736351923468238891) #until i learn how to grab roles in an easier manner
     tierroles = {1: 754533153258864741, 2: 754535125752086640, 3: 754535269335564291,
                  4: 754537923659169842, 5: 754538022569115690}
 
     if hasattr(message, 'author'):
         author = message.author
+    user = guild.get_member(author.id)
     #print("this is xp: " + str(xp)) #used for debugging
     ftier = 0 #final tier to return
     if (os.path.exists("config.txt")):
