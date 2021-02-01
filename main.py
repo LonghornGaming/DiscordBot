@@ -432,7 +432,6 @@ async def handleIntro(message: discord.Message) -> None:
         await giveXp(message, 50, False)  # first time gives 50 xp
     DB.close()
 
-
 @client.event
 async def milestoneCheck(message: discord.Message, xp: int, otier: int) -> int:
     author = message  # message can just be a userId... kinda hacky fix
@@ -472,16 +471,7 @@ async def milestoneCheck(message: discord.Message, xp: int, otier: int) -> int:
         author = message.author
     user = guild.get_member(author.id)
     # print("this is xp: " + str(xp)) #used for debugging
-    ftier = 0  # final tier to return
-    if (os.path.exists("config.txt")):
-        with open("config.txt", 'r') as openFile:
-            tiers = json.loads(openFile.read())
-            for tier in tiers['tiers']:  # creates the list of tiers to iterate through
-                for tiernum in tier["number"]:  # checks each tier "number"
-                    if (int)(xp) >= (int)(tier["xp"]):  # xp threshold check
-                        ftier = (int)(tiernum)  # updates tier number if necessary
-                    else:
-                        break  # stops from updating to wrong tier
+    ftier = getTier(xp)
     if otier < ftier:  # in the event there is a tier upgrade
         dms = author.dm_channel
         if (not dms):  # if there is a dm channel that already exists
@@ -498,6 +488,18 @@ async def milestoneCheck(message: discord.Message, xp: int, otier: int) -> int:
             await author.dm_channel.send(msg)
     return ftier
 
+def getTier(xp):
+    ftier = 0  # final tier to return
+    if (os.path.exists("config.txt")):
+        with open("config.txt", 'r') as openFile:
+            tiers = json.loads(openFile.read())
+            for tier in tiers['tiers']:  # creates the list of tiers to iterate through
+                for tiernum in tier["number"]:  # checks each tier "number"
+                    if (int)(xp) >= (int)(tier["xp"]):  # xp threshold check
+                        ftier = (int)(tiernum)  # updates tier number if necessary
+                    else:
+                        return ftier  # stops from updating to wrong tier
+    
 
 @client.event
 async def on_message(message: discord.Message) -> None:
@@ -518,6 +520,60 @@ async def on_message(message: discord.Message) -> None:
         await xpPerMessage(message)
         await randomClaimMessage(message, False)
 
+
+@client.event
+async def on_member_update(before, after):
+    lgMemberRole = 736351923468238891
+    tierroles = {1: 754533153258864741, 2: 754535125752086640, 3: 754535269335564291,
+                 4: 754537923659169842, 5: 754538022569115690}
+    dmemsg = {1: "Congratulations! You've hit the **Bronze** tier, which gives you the following rewards:\n"
+                 "```- LG Membership Shirt (multiple delivery options available)\n"
+                 "- Exclusive Discord role (@Bevo Bot Bronze)```"
+                 " In order to claim your rewards, please visit the following link to provide"
+                 " us with the necessary information: <https://forms.gle/Vb2kBD4DZnrr7UNTA>",
+              2: "Congratulations! You've hit the **Silver** tier, which gives you the following rewards:\n"
+                 "```- A small LG sticker\n"
+                 "- Access to exclusive giveaways\n"
+                 "- Exclusive Discord role (@Bevo Bot Silver)```",
+              3: "Congratulations! You've hit the **Gold** tier, which gives you the following rewards:\n"
+                 "```- A large LG sticker (limited quantity!)\n"
+                 "- Early access to a future LG project\n"
+                 "- Exclusive Discord role (@Bevo Bot Gold)```",
+              4: "Congratulations! You've hit the **Platinum** tier, which gives you the following rewards:\n"
+                 "```- 1 month of Nitro Classic on us\n"
+                 "- A large holographic LG sticker (limited quantity!)\n"
+                 "- Exclusive Discord role (@Bevo Bot Platinum)```",
+              5: "Congratulations! You've hit the **Diamond** tier, which gives you the following rewards:\n"
+                 "```- A HyperX peripheral of your choice (limited to first 5 members)\n"
+                 "- Exclusive Discord role (@Bevo Bot Diamond)```"
+              }
+    beforeRoles = before.roles
+    afterRoles = after.roles
+    wasLGMember = False
+    isLGMember = False
+    for role in beforeRoles:
+        if lgMemberRole == role.id:
+            wasLGMember = True
+    for role in afterRoles:
+        if lgMemberRole == role.id:
+            isLGMember = True
+    if(after.id == 103645519091355648):
+        print(wasLGMember,isLGMember)
+    if (isLGMember and not wasLGMember): 
+        print("member just got the lgMemberRole")
+        #check if lg member role is in after but not before
+        DB = connectToDB()  # this can be better, but for a later version
+        cursor = DB.cursor()
+        cursor.execute("SELECT xp FROM users WHERE discordId = \"" + str(after.id) + "\"")
+        result = cursor.fetchall()
+        assert not len(result) > 1, "more than one entry with the same discordId"
+        xp = result[0][0]
+        ftier = getTier(xp)
+        roleid = tierroles.get(ftier, 0)
+        msg = dmemsg.get(ftier, 0)
+        role = after.guild.get_role(roleid)
+        await after.add_roles(role)
+        await after.dm_channel.send(msg)
 
 @client.event
 async def on_reaction_add(reaction, user):
