@@ -1,14 +1,17 @@
-from config import CLIENT_TOKEN
 import discord
-from discord.ext import commands
-from config import CLIENT_TOKEN, db_pw, db_host, db_name, db_user
-import pymysql
 import os
+import pymysql
+
+from config      import CLIENT_TOKEN, db_pw, db_host, db_name, db_user
+from discord.ext import commands
+
 
 command_prefix = '!'
 bot = commands.Bot(command_prefix=command_prefix)
 
-cogs_list = ['cogs.user']
+
+cogs_list = ['cogs.user', 'cogs.admin']
+
 
 @bot.event
 async def on_ready():
@@ -16,10 +19,12 @@ async def on_ready():
     game = discord.Game(name="Bevo Bot | !help")
     await bot.change_presence(activity=game)
 
+
 # test command
 @bot.command(name='bevo')
 async def bevo(ctx):
     await ctx.send("bot!")
+
 
 # Connection to DB, copied from main-old, likely needs revision
 async def connectToDB():
@@ -36,5 +41,6 @@ async def connectToDB():
 
 for cog in cogs_list:
     bot.load_extension(cog)
+
 
 bot.run(CLIENT_TOKEN)
