@@ -8,6 +8,8 @@ import os
 command_prefix = '!'
 bot = commands.Bot(command_prefix=command_prefix)
 
+cogs_list = ['cogs.user']
+
 @bot.event
 async def on_ready():
     print("We have logged in as {0.user}".format(bot))
@@ -31,5 +33,8 @@ async def connectToDB():
     print("Database connected to!")
     return DB
 
+
+for cog in cogs_list:
+    bot.load_extension(cog)
 
 bot.run(CLIENT_TOKEN)
