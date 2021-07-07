@@ -6,7 +6,7 @@ class User(commands.Cog):
         self.bot = bot
 
     """
-    Show's the user profile
+    Shows the user profile
     @param: ctx
     """
     @commands.command(name='profile')
