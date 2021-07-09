@@ -10,7 +10,7 @@ command_prefix = '?'
 bot = commands.Bot(command_prefix=command_prefix)
 
 
-cogs_list = ['cogs.user', 'cogs.admin']
+cogs_list = ['cogs.user', 'cogs.admin', 'cogs.xp']
 
 
 @bot.event

@@ -19,7 +19,7 @@ class XP(commands.Cog):
     @commands.command(name='leaderboard')
     async def sendProfile(self, ctx):
         embed=discord.Embed(title="XP Leaderboard!")
-        ctx.send(embed=embed)
+        await ctx.send(embed=embed)
         return
 
 
@@ -30,7 +30,7 @@ class XP(commands.Cog):
     @commands.command(name='tiers')
     async def showTiers(self, ctx):
         embed=discord.Embed(title="XP Tier List!")
-        ctx.send(embed=embed)
+        await ctx.send(embed=embed)
         return
     
 
