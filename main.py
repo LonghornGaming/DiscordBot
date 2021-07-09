@@ -5,7 +5,7 @@ import pymysql
 from config      import CLIENT_TOKEN, db_pw, db_host, db_name, db_user
 from discord.ext import commands
 
-
+#hi sploon is the superior game to league
 command_prefix = '!'
 bot = commands.Bot(command_prefix=command_prefix)
 
