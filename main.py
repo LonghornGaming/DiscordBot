@@ -8,7 +8,7 @@ from discord.ext import commands
 #hi sploon is the superior game to league
 command_prefix = '?'
 bot = commands.Bot(command_prefix=command_prefix)
-
+bot.remove_command('help')
 
 cogs_list = ['cogs.user', 'cogs.admin', 'cogs.xp']
 
