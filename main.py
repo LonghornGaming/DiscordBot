@@ -26,7 +26,7 @@ async def bevo(ctx):
     await ctx.send("bot!")
 
 @bot.command(name='help')
-    embed = discord.Embed(title="Howdy!", colour=discord.Colour(0xBF5700), url="https://discordapp.com", description="I'm a bot created for the Longhorn Gaming Discord. Below are my commands:", timestamp=datetime.datetime.now())
+    embed = discord.Embed(title="Howdy!", colour=discord.Colour(0xBF5700), url="https://longhorngaming.gg/", description="I'm a bot created for the Longhorn Gaming Discord. Below are my commands:", timestamp=datetime.datetime.now())
     embed.set_author(name="Bevo Bot")
     embed.set_footer(text="Bevo Bot")
 
