@@ -25,6 +25,17 @@ async def on_ready():
 async def bevo(ctx):
     await ctx.send("bot!")
 
+@bot.command(name='help')
+    embed = discord.Embed(title="Howdy!", colour=discord.Colour(0xBF5700), url="https://discordapp.com", description="I'm a bot created for the Longhorn Gaming Discord. Below are my commands:", timestamp=datetime.datetime.now())
+    embed.set_author(name="Bevo Bot")
+    embed.set_footer(text="Bevo Bot")
+
+    embed.add_field(name="!help :question:", value="You're already here!\n")
+    embed.add_field(name="!profile :person_curly_hair:", value="Check your XP and Tier.\n")
+    embed.add_field(name="!tiers :medal:", value="A brief explanation of tiers and rewards.\n")
+
+    await ctx.channel.send(embed=embed)
+
 
 # Connection to DB, copied from main-old, likely needs revision
 async def connectToDB():
