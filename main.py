@@ -1,14 +1,17 @@
 import discord
 import os
-# import pymysql
+import pymysql
 import datetime
-
-from config      import CLIENT_TOKEN, db_pw, db_host, db_name, db_user
+from config import CLIENT_TOKEN, db_pw, db_host, db_name, db_user
 from discord.ext import commands
 
-#hi sploon is the superior game to league
+# Needed for getting members list in profile commands
+# Requires 'Server Members Intent' to be enabled in developer console
+intents = discord.Intents.default()
+intents.members = True
+
 command_prefix = '?'
-bot = commands.Bot(command_prefix=command_prefix)
+bot = commands.Bot(command_prefix=command_prefix, intents=intents)
 bot.remove_command('help')
 
 cogs_list = ['cogs.user', 'cogs.admin', 'cogs.xp']
