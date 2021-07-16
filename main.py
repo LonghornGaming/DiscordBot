@@ -1,8 +1,8 @@
 import discord
 import os
-import pymysql
-import datetime
-from config import CLIENT_TOKEN, db_pw, db_host, db_name, db_user
+#import pymysql
+
+from config      import CLIENT_TOKEN, db_pw, db_host, db_name, db_user
 from discord.ext import commands
 
 # Needed for getting members list in profile commands
