@@ -1,9 +1,11 @@
 import discord
 import os
-#import pymysql
 
-from config      import CLIENT_TOKEN, db_pw, db_host, db_name, db_user
+from config import CLIENT_TOKEN, db_password
 from discord.ext import commands
+
+from pymongo import MongoClient, collation
+import pymongo
 
 # Needed for getting members list in profile commands
 # Requires 'Server Members Intent' to be enabled in developer console
@@ -21,6 +23,9 @@ cogs_list = ['cogs.user', 'cogs.admin', 'cogs.xp']
 async def on_ready():
     print("We have logged in as {0.user}".format(bot))
     game = discord.Game(name="Bevo Bot | !help")
+    collection = connectToDB()
+    for x in collection.find():
+        print(x)
     await bot.change_presence(activity=game)
 
 
@@ -29,30 +34,33 @@ async def on_ready():
 async def bevo(ctx):
     await ctx.send("bot!")
 
+
 @bot.command(name='help')
 async def help(ctx):
-    embed = discord.Embed(title="Howdy!", colour=discord.Colour(0xBF5700), url="https://longhorngaming.gg/", description="I'm a bot created for the Longhorn Gaming Discord. Below are my commands:", timestamp=datetime.datetime.now())
+    embed = discord.Embed(title="Howdy!", colour=discord.Colour(0xBF5700), url="https://longhorngaming.gg/",
+                          description="I'm a bot created for the Longhorn Gaming Discord. Below are my commands:", timestamp=datetime.datetime.now())
     embed.set_author(name="Bevo Bot")
     embed.set_footer(text="Bevo Bot")
 
     embed.add_field(name="!help :question:", value="You're already here!\n")
-    embed.add_field(name="!profile :person_curly_hair:", value="Check your XP and Tier.\n")
-    embed.add_field(name="!tiers :medal:", value="A brief explanation of tiers and rewards.\n")
+    embed.add_field(name="!profile :person_curly_hair:",
+                    value="Check your XP and Tier.\n")
+    embed.add_field(name="!tiers :medal:",
+                    value="A brief explanation of tiers and rewards.\n")
 
     await ctx.channel.send(embed=embed)
 
 
-# Connection to DB, copied from main-old, likely needs revision
-async def connectToDB():
-    hst, dbname, u, pw = "", "", "", ""
-    if (os.path.exists("config.py")): # verify that config.py exists for security
-        hst = db_host
-        dbname = db_name
-        u = db_user
-        pw = db_pw
-    DB = pymysql.connect(host=hst, user=u, password=pw, database=dbname)  # connect to our database
-    print("Database connected to!")
-    return DB
+def connectToDB():
+    CONNECTION_STRING = f'mongodb+srv://dbAdmin:{db_password}@beepodb.gcurw.mongodb.net/BeepoDB?retryWrites=true&w=majority'
+    client = MongoClient(CONNECTION_STRING)
+    # Create a database called 'xp_info' if needed
+    xp_info = client['xp_info']
+    # Access the collection 'users'
+    users = xp_info['users']
+    dict = { "name": "Avi", "xp": "1000" }
+    users.insert_one(dict)
+    return users
 
 
 for cog in cogs_list:
