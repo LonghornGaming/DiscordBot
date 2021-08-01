@@ -1,5 +1,2 @@
-CLIENT_TOKEN = 'some_token'
-db_pw = 'some pswd'
-db_host = 'foo'
-db_name = 'foo'
-db_user = 'foo'
+CLIENT_TOKEN = ''
+db_password = ''
