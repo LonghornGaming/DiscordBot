@@ -32,9 +32,9 @@ class XP(commands.Cog):
         embed = discord.Embed(title="Bevo Bot's XP Tiers",
                               description="All XP tiers come with their own respective Discord roles. ", color=0xbf5700)
         embed.add_field(name="Tier 1: Bronze, 500 XP",
-                        value="LG member shirt, Small LG sticker\n\u200B", inline=False)
+                        value="LG member t-shirt and small LG sticker\n\u200B", inline=False)
         embed.add_field(name="Tier 2: Silver, 2000 XP",
-                        value="Large LG sticker, Access to exclusive giveaways\n\u200B", inline=False)
+                        value="Large LG sticker and access to exclusive giveaways\n\u200B", inline=False)
         embed.add_field(name="Tier 3: Gold, 5000 XP",
                         value="Holographic LG sticker\n\u200B", inline=False)
         embed.add_field(name="Tier 4: Platinum, 10000 XP",
