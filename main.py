@@ -1,11 +1,12 @@
+import datetime
 import discord
 import os
-
-from config import CLIENT_TOKEN, db_password
-from discord.ext import commands
-
-from pymongo import MongoClient, collation
 import pymongo
+
+from config      import CLIENT_TOKEN, db_pw
+from discord.ext import commands
+from pymongo     import MongoClient, collation
+
 
 # Needed for getting members list in profile commands
 # Requires 'Server Members Intent' to be enabled in developer console
@@ -23,9 +24,9 @@ cogs_list = ['cogs.user', 'cogs.admin', 'cogs.xp']
 async def on_ready():
     print("We have logged in as {0.user}".format(bot))
     game = discord.Game(name="Bevo Bot | !help")
-    collection = connectToDB()
-    for x in collection.find():
-        print(x)
+    setup_db()
+    # for x in collection.find():
+    #     print(x)
     await bot.change_presence(activity=game)
 
 
@@ -51,16 +52,17 @@ async def help(ctx):
     await ctx.channel.send(embed=embed)
 
 
-def connectToDB():
-    CONNECTION_STRING = f'mongodb+srv://dbAdmin:{db_password}@beepodb.gcurw.mongodb.net/BeepoDB?retryWrites=true&w=majority'
+def setup_db():
+    CONNECTION_STRING = f'mongodb+srv://dbAdmin:{db_pw}@beepodb.gcurw.mongodb.net/BeepoDB?retryWrites=true&w=majority'
     client = MongoClient(CONNECTION_STRING)
+    
     # Create a database called 'xp_info' if needed
     xp_info = client['xp_info']
     # Access the collection 'users'
     users = xp_info['users']
-    dict = { "name": "Avi", "xp": "1000" }
-    users.insert_one(dict)
-    return users
+    # dict = { "_id": "862486853717983243", "name": "beepo test bot", "xp": "696969", "tier": "diamond" }
+    # users.insert_one(dict)
+    # return users
 
 
 for cog in cogs_list:
