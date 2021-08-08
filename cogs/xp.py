@@ -32,16 +32,16 @@ class XP(commands.Cog):
         embed = discord.Embed(title="Bevo Bot's XP Tiers",
                               description="All XP tiers come with their own respective Discord roles. ", color=0xbf5700)
         embed.add_field(name="Tier 1: Bronze, 500 XP",
-                        value="LG member t-shirt\n\u200B", inline=False)
+                        value="LG member shirt, Small LG sticker\n\u200B", inline=False)
         embed.add_field(name="Tier 2: Silver, 2000 XP",
-                        value="LG (small) sticker\n\u200B", inline=False)
+                        value="Large LG sticker, Access to exclusive giveaways\n\u200B", inline=False)
         embed.add_field(name="Tier 3: Gold, 5000 XP",
-                        value="LG (large) sticker\n\u200B", inline=False)
+                        value="Holographic LG sticker\n\u200B", inline=False)
         embed.add_field(name="Tier 4: Platinum, 10000 XP",
-                        value="LG Holographic sticker\n\u200B", inline=False)
+                        value="1 piece of LG merch\n\u200B", inline=False)
         embed.add_field(name="Tier 5: Diamond, 20000 XP",
-                        value="LG gamer sticker\n\u200B", inline=False)
-        embed.set_footer(text="All in-kind prizes are for LG members only. Prizes are tentative and subject to change. If we add a prize but you’ve already surpassed that rank, you’ll still receive it retroactively.")
+                        value="TBA\n\u200B", inline=False)
+        embed.set_footer(text="All in-kind prizes are for LG members only. Prizes are tentative and subject to change. You must be apart of the main LG server to receive your prizes.")
         await ctx.send(embed=embed)
 
     """
