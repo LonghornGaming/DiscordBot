@@ -41,7 +41,7 @@ class XP(commands.Cog):
                         value="1 piece of LG merch\n\u200B", inline=False)
         embed.add_field(name="Tier 5: Diamond, 20000 XP",
                         value="TBA\n\u200B", inline=False)
-        embed.set_footer(text="All in-kind prizes are for LG members only. Prizes are tentative and subject to change. You must be apart of the main LG server to receive your prizes.")
+        embed.set_footer(text="All in-kind prizes are for LG members only. Prizes are tentative and subject to change. You must be a part of the main LG server for 2 weeks to receive your prizes.")
         await ctx.send(embed=embed)
 
     """
